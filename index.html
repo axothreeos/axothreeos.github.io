@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Hand Tracking ML Debug</title>
+<title>Hand Tracking Visual Debug</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 html, body {
   margin: 0;
+  width: 100%;
+  height: 100%;
   background: black;
   overflow: hidden;
+  font-family: Arial, sans-serif;
 }
 
 video, canvas {
@@ -19,14 +22,39 @@ video, canvas {
   object-fit: cover;
 }
 
-#start {
+#ui {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  color: white;
+  background: rgba(0,0,0,0.6);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+#ui button {
+  display: block;
+  margin-top: 6px;
+  width: 160px;
+  padding: 6px;
+  background: #222;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+
+#startBtn {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  padding: 16px 24px;
+  padding: 16px 26px;
   font-size: 18px;
-  z-index: 10;
+  border: none;
+  border-radius: 8px;
+  background: #00ff88;
+  z-index: 20;
 }
 </style>
 
@@ -37,7 +65,13 @@ video, canvas {
 
 <body>
 
-<button id="start">Start Camera</button>
+<button id="startBtn">Start Camera</button>
+
+<div id="ui" style="display:none">
+  Fingers: <span id="fingerCount">0</span>
+  <button id="toggleViz">Toggle Visualization</button>
+</div>
+
 <video id="video" playsinline></video>
 <canvas id="canvas"></canvas>
 
@@ -45,9 +79,22 @@ video, canvas {
 const video = document.getElementById("video")
 const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
-const startBtn = document.getElementById("start")
+
+const startBtn = document.getElementById("startBtn")
+const ui = document.getElementById("ui")
+const fingerLabel = document.getElementById("fingerCount")
+const toggleVizBtn = document.getElementById("toggleViz")
 
 let detector
+let showViz = true
+
+const connections = [
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20]
+]
 
 async function initModel() {
   detector = await handPoseDetection.createDetector(
@@ -70,15 +117,43 @@ async function startCamera() {
   canvas.height = video.videoHeight
 }
 
-function drawLandmarks(hand) {
+function drawSkeleton(hand) {
   ctx.strokeStyle = "#00ff88"
-  ctx.fillStyle = "#ff0044"
+  ctx.lineWidth = 3
 
+  for (const [a, b] of connections) {
+    const p1 = hand.keypoints[a]
+    const p2 = hand.keypoints[b]
+    ctx.beginPath()
+    ctx.moveTo(p1.x, p1.y)
+    ctx.lineTo(p2.x, p2.y)
+    ctx.stroke()
+  }
+}
+
+function drawLandmarks(hand) {
+  ctx.fillStyle = "#ff0044"
   for (const p of hand.keypoints) {
     ctx.beginPath()
-    ctx.arc(p.x, p.y, 6, 0, Math.PI * 2)
+    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2)
     ctx.fill()
   }
+}
+
+function drawBoundingBox(hand) {
+  let minX = Infinity, minY = Infinity
+  let maxX = 0, maxY = 0
+
+  for (const p of hand.keypoints) {
+    minX = Math.min(minX, p.x)
+    minY = Math.min(minY, p.y)
+    maxX = Math.max(maxX, p.x)
+    maxY = Math.max(maxY, p.y)
+  }
+
+  ctx.strokeStyle = "#ffffff"
+  ctx.lineWidth = 2
+  ctx.strokeRect(minX, minY, maxX - minX, maxY - minY)
 }
 
 function countFingers(hand) {
@@ -99,18 +174,29 @@ async function loop() {
 
   const hands = await detector.estimateHands(video)
   if (hands.length > 0) {
-    drawLandmarks(hands[0])
-    const fingers = countFingers(hands[0])
-    ctx.fillStyle = "white"
-    ctx.font = "24px Arial"
-    ctx.fillText("Fingers: " + fingers, 20, 40)
+    const hand = hands[0]
+    const fingers = countFingers(hand)
+    fingerLabel.textContent = fingers
+
+    if (showViz) {
+      drawBoundingBox(hand)
+      drawSkeleton(hand)
+      drawLandmarks(hand)
+    }
+  } else {
+    fingerLabel.textContent = "0"
   }
 
   requestAnimationFrame(loop)
 }
 
+toggleVizBtn.onclick = () => {
+  showViz = !showViz
+}
+
 startBtn.onclick = async () => {
   startBtn.style.display = "none"
+  ui.style.display = "block"
   await initModel()
   await startCamera()
   loop()
