@@ -3,23 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Object Detection with MediaPipe + Three.js</title>
+<title>3D Object Detection - MediaPipe + Three.js</title>
 <style>
   body { margin: 0; overflow: hidden; background: #111; color: #fff; font-family: Arial, sans-serif; }
-  #video { display: none; }
+  #log { position: absolute; top: 0; left: 0; z-index: 2; color: #0f0; padding: 8px; font-size: 14px; }
+  video { display: none; }
   canvas { display: block; }
-  #log { position: absolute; top: 0; left: 0; z-index: 2; color: #0f0; padding: 4px; font-size: 14px; }
 </style>
-<!-- MediaPipe tasks-vision -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js" crossorigin="anonymous"></script>
-<!-- THREE.js -->
+
+<!-- MediaPipe Tasks Vision -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js"></script>
+<!-- Three.js -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
-<div id="log">Initializing…</div>
-<video id="video" playsinline autoplay muted></video>
+<div id="log">Initializing...</div>
+<video id="video" autoplay muted playsinline></video>
 <canvas id="three-canvas"></canvas>
 
 <script>
@@ -28,99 +29,114 @@
   const video = document.getElementById("video");
   const canvas3D = document.getElementById("three-canvas");
 
-  // Setup back camera
+  // 1️⃣ Back Camera Setup
   async function setupBackCamera() {
     const devices = await navigator.mediaDevices.enumerateDevices();
     const backCam = devices.find(d => d.kind === "videoinput" && /back|rear/i.test(d.label));
-    const props = backCam ? { video: { deviceId: { exact: backCam.deviceId }, width: 640, height: 480 } }
-                          : { video: { facingMode: "environment", width: 640, height: 480 } };
-    const stream = await navigator.mediaDevices.getUserMedia(props);
+    const constraints = backCam
+      ? { video: { deviceId: { exact: backCam.deviceId }, width: 640, height: 480 } }
+      : { video: { facingMode: "environment", width: 640, height: 480 } };
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
     video.srcObject = stream;
     return new Promise(r => video.onloadedmetadata = r);
   }
-
   await setupBackCamera();
 
-  // Initialize Object Detector
+  // 2️⃣ MediaPipe Object Detector
   const { ObjectDetector, FilesetResolver } = window.tasksVision;
-  const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm");
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+  );
 
   const objectDetector = await ObjectDetector.createFromOptions(vision, {
-    baseOptions: { modelAssetPath: "models/efficientdet_lite2_float32.tflite" },
+    baseOptions: {
+      // Replace with your EfficientDet-Lite2 model path
+      modelAssetPath: "models/efficientdet_lite2_float32.tflite"
+    },
     scoreThreshold: 0.5,
-    runningMode: "video",
+    runningMode: "video"
   });
+  log.innerText = "Object Detector Loaded!";
 
-  log.textContent = "Detector loaded!";
-
-  // THREE.js setup
+  // 3️⃣ Three.js Scene Setup
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 0, 10);
+  const camera3D = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera3D.position.set(0, 0, 10);
   const renderer = new THREE.WebGLRenderer({ canvas: canvas3D, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
 
-  // Orbit Controls (optional)
-  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  const controls = new THREE.OrbitControls(camera3D, renderer.domElement);
 
-  // A group to hold 3D boxes
   const boxesGroup = new THREE.Group();
   scene.add(boxesGroup);
 
-  // Render loop
+  // 4️⃣ Render Loop
   function render() {
     requestAnimationFrame(render);
     controls.update();
-    renderer.render(scene, camera);
+    renderer.render(scene, camera3D);
   }
   render();
 
-  // Convert detection boxes into THREE.js boxes
+  // 5️⃣ Draw Detected Objects in 3D
   function draw3DObjects(detections) {
-    // Clear old boxes
     boxesGroup.clear();
-
     detections.forEach(d => {
       const box = d.boundingBox;
       const label = d.categories[0].categoryName;
       const score = (d.categories[0].score * 100).toFixed(1);
 
-      // Box center and scale
+      // Compute center & size (normalize coordinates from 0..1 to -5..5)
       const x = (box.xMin + (box.xMax - box.xMin)/2 - 0.5) * 10;
       const y = -(box.yMin + (box.yMax - box.yMin)/2 - 0.5) * 10;
       const w = (box.xMax - box.xMin) * 10;
       const h = (box.yMax - box.yMin) * 10;
 
-      // Create 3D cube
-      const geometry = new THREE.BoxGeometry(w, h, 0.1);
+      // Cube geometry for object
+      const geometry = new THREE.BoxGeometry(w, h, 0.5);
       const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
       const cube = new THREE.Mesh(geometry, material);
       cube.position.set(x, y, -1);
       boxesGroup.add(cube);
 
-      // Label text
-      const textGeom = new THREE.TextGeometry(`${label} ${score}%`, {
-        font: new THREE.FontLoader().parse(THREE.FontUtils.extract(fontJSON)),
-        size: 0.3,
-        height: 0.02,
+      // Floating label
+      const spriteMat = new THREE.SpriteMaterial({
+        map: createTextTexture(`${label} ${score}%`),
+        transparent: true
       });
-      const textMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-      const textMesh = new THREE.Mesh(textGeom, textMat);
-      textMesh.position.set(x - w/2, y + h/2, -1);
-      boxesGroup.add(textMesh);
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.scale.set(2, 1, 1);
+      sprite.position.set(x, y + h/2, -1);
+      boxesGroup.add(sprite);
     });
   }
 
+  // Helper: create a THREE.js texture from text
+  function createTextTexture(text) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "white";
+    ctx.font = "28px Arial";
+    ctx.fillText(text, 5, 40);
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+  }
+
+  // 6️⃣ Detection Loop
   let lastTime = -1;
   function detectLoop() {
     if (video.currentTime !== lastTime) {
       const results = objectDetector.detectForVideo(video, performance.now());
       draw3DObjects(results.detections);
+      log.innerText = `Objects detected: ${results.detections.length}`;
       lastTime = video.currentTime;
     }
     requestAnimationFrame(detectLoop);
   }
   detectLoop();
+
 })();
 </script>
 </body>
