@@ -3,75 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Camera ML Demo</title>
+  <title>Ultra-Fast Back Camera ML</title>
   <style>
-    body { display: flex; flex-direction: column; align-items: center; font-family: sans-serif; background: #222; color: #fff; }
-    video { border: 2px solid #fff; border-radius: 8px; }
-    canvas { position: absolute; top: 0; left: 0; }
+    body { margin: 0; font-family: sans-serif; background: #111; color: #fff; display: flex; flex-direction: column; align-items: center; }
+    h1 { margin: 10px 0; }
     #container { position: relative; }
-    #log { margin-top: 10px; max-width: 600px; text-align: left; }
+    video, canvas { border-radius: 8px; }
+    canvas { position: absolute; top: 0; left: 0; }
+    #log { margin-top: 10px; max-width: 700px; font-size: 14px; }
   </style>
 </head>
 <body>
-  <h1>Real-time Object Detection</h1>
+  <h1>Back Camera Ultra-Fast ML</h1>
   <div id="container">
-    <video id="video" width="640" height="480" autoplay muted></video>
+    <video id="video" width="640" height="480" autoplay muted playsinline></video>
     <canvas id="canvas" width="640" height="480"></canvas>
   </div>
-  <div id="log"></div>
+  <div id="log">Loading models...</div>
 
   <!-- TensorFlow.js -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-  <!-- Pretrained COCO-SSD model -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.12.0/dist/tf.min.js"></script>
+  <!-- Coco-SSD for objects -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+  <!-- MediaPipe Pose -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
   <script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const log = document.getElementById('log');
-    let model;
+    let objectModel, poseModel;
 
-    // Start the webcam
-    async function setupCamera() {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    // Select back camera
+    async function setupBackCamera() {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const backCamera = devices.find(d => d.kind === 'videoinput' && d.label.toLowerCase().includes('back'));
+      const constraints = {
+        video: { deviceId: backCamera ? { exact: backCamera.deviceId } : undefined, width: 640, height: 480, facingMode: "environment" }
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       video.srcObject = stream;
-      return new Promise(resolve => {
-        video.onloadedmetadata = () => { resolve(video); };
-      });
+      return new Promise(resolve => video.onloadedmetadata = () => resolve(video));
     }
 
-    // Load the ML model
-    async function loadModel() {
-      model = await cocoSsd.load();
-      log.innerHTML = "Model loaded. Detecting objects...";
+    // Load models
+    async function loadModels() {
+      objectModel = await cocoSsd.load({ base: 'lite_mobilenet_v2' });
+      poseModel = new Pose({ locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
+      poseModel.setOptions({ modelComplexity: 1, smoothLandmarks: true, enableSegmentation: false });
+      poseModel.onResults(onPoseResults);
+      log.innerHTML = "Models loaded! Detecting...";
     }
 
-    // Draw predictions on canvas
+    // Draw predictions
     function drawPredictions(predictions) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
       predictions.forEach(pred => {
         const [x, y, width, height] = pred.bbox;
         ctx.strokeStyle = 'lime';
         ctx.lineWidth = 2;
         ctx.strokeRect(x, y, width, height);
         ctx.fillStyle = 'lime';
-        ctx.font = '18px Arial';
-        ctx.fillText(`${pred.class} (${(pred.score*100).toFixed(1)}%)`, x, y > 20 ? y-5 : y+20);
+        ctx.font = '16px Arial';
+        ctx.fillText(`${pred.class} ${(pred.score*100).toFixed(1)}%`, x, y > 20 ? y-5 : y+15);
       });
-      log.innerHTML = predictions.map(p => `${p.class} (${(p.score*100).toFixed(1)}%)`).join('<br>');
+    }
+
+    // Draw pose landmarks
+    function onPoseResults(results) {
+      if (!results.poseLandmarks) return;
+      drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: 'cyan', lineWidth: 2 });
+      drawLandmarks(ctx, results.poseLandmarks, { color: 'magenta', lineWidth: 1 });
     }
 
     // Main loop
     async function detectFrame() {
-      const predictions = await model.detect(video);
-      drawPredictions(predictions);
-      requestAnimationFrame(detectFrame);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Object detection
+      const objects = await objectModel.detect(video);
+      drawPredictions(objects);
+      // Pose detection
+      await poseModel.send({ image: video });
+      video.requestVideoFrameCallback(detectFrame);
     }
 
     async function main() {
-      await setupCamera();
-      await loadModel();
+      await setupBackCamera();
+      await loadModels();
       detectFrame();
     }
 
