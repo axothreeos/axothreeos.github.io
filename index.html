@@ -1,134 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Smart Custom Object Detector</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
-    <style>
-        body { font-family: 'Press Start 2P', monospace; text-align: center; margin: 20px; }
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        video, canvas { border: 2px solid black; max-width: 100%; }
-        #custom-label { margin-top: 10px; display: none; }
-        input, button { font-family: 'Press Start 2P', monospace; font-size: 12px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camera ML Demo</title>
+  <style>
+    body { display: flex; flex-direction: column; align-items: center; font-family: sans-serif; background: #222; color: #fff; }
+    video { border: 2px solid #fff; border-radius: 8px; }
+    canvas { position: absolute; top: 0; left: 0; }
+    #container { position: relative; }
+    #log { margin-top: 10px; max-width: 600px; text-align: left; }
+  </style>
 </head>
 <body>
-    <h1>Smart Custom Object Detector</h1>
-    <video id="video" width="640" height="480" autoplay muted playsinline></video>
+  <h1>Real-time Object Detection</h1>
+  <div id="container">
+    <video id="video" width="640" height="480" autoplay muted></video>
     <canvas id="canvas" width="640" height="480"></canvas>
-    <div id="custom-label">
-        <input type="text" id="label-input" placeholder="Enter object name">
-        <button onclick="addCustomLabel()">Add Label</button>
-    </div>
+  </div>
+  <div id="log"></div>
 
-    <script>
-        let model;
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+  <!-- TensorFlow.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <!-- Pretrained COCO-SSD model -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
 
-        // Store custom objects with bounding boxes
-        const customObjects = [];
-        let pendingObject = null;
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const log = document.getElementById('log');
+    let model;
 
-        async function init() {
-            // Load COCO-SSD model (pre-trained on 80 common objects)
-            model = await cocoSsd.load();
-            console.log("Model loaded");
-            startVideo();
-        }
+    // Start the webcam
+    async function setupCamera() {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+      return new Promise(resolve => {
+        video.onloadedmetadata = () => { resolve(video); };
+      });
+    }
 
-        function startVideo() {
-            // Use back camera if available
-            navigator.mediaDevices.getUserMedia({
-                video: { facingMode: { exact: "environment" } }
-            })
-            .then(stream => {
-                video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    video.play();
-                    detectFrame();
-                };
-            })
-            .catch(err => {
-                console.warn("Back camera not available, using default camera.", err);
-                // Fallback to default camera
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(stream => {
-                        video.srcObject = stream;
-                        video.onloadedmetadata = () => {
-                            video.play();
-                            detectFrame();
-                        };
-                    });
-            });
-        }
+    // Load the ML model
+    async function loadModel() {
+      model = await cocoSsd.load();
+      log.innerHTML = "Model loaded. Detecting objects...";
+    }
 
-        // Simple bounding box overlap checker
-        function bboxOverlap(b1, b2) {
-            const [x1, y1, w1, h1] = b1;
-            const [x2, y2, w2, h2] = b2;
-            return !(x1 + w1 < x2 || x1 > x2 + w2 || y1 + h1 < y2 || y1 > y2 + h2);
-        }
+    // Draw predictions on canvas
+    function drawPredictions(predictions) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      predictions.forEach(pred => {
+        const [x, y, width, height] = pred.bbox;
+        ctx.strokeStyle = 'lime';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width, height);
+        ctx.fillStyle = 'lime';
+        ctx.font = '18px Arial';
+        ctx.fillText(`${pred.class} (${(pred.score*100).toFixed(1)}%)`, x, y > 20 ? y-5 : y+20);
+      });
+      log.innerHTML = predictions.map(p => `${p.class} (${(p.score*100).toFixed(1)}%)`).join('<br>');
+    }
 
-        async function detectFrame() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // Main loop
+    async function detectFrame() {
+      const predictions = await model.detect(video);
+      drawPredictions(predictions);
+      requestAnimationFrame(detectFrame);
+    }
 
-            const predictions = await model.detect(video);
+    async function main() {
+      await setupCamera();
+      await loadModel();
+      detectFrame();
+    }
 
-            let unknownDetected = false;
-
-            predictions.forEach(pred => {
-                const [x, y, width, height] = pred.bbox;
-                let label = pred.class;
-
-                // Check for custom object matches
-                const match = customObjects.find(obj => bboxOverlap(obj.bbox, pred.bbox));
-                if (match) label = match.name;
-                else if (!['person','cat','dog','car','bottle','chair','laptop','cell phone','book'].includes(label)) {
-                    label = "Unknown";
-                    unknownDetected = true;
-                    if (!pendingObject) pendingObject = { bbox: pred.bbox };
-                }
-
-                // Draw box
-                ctx.strokeStyle = (label === "Unknown") ? 'red' : 'lime';
-                ctx.lineWidth = 3;
-                ctx.strokeRect(x, y, width, height);
-
-                // Draw label
-                ctx.fillStyle = (label === "Unknown") ? 'red' : 'lime';
-                ctx.font = "16px 'Press Start 2P'";
-                ctx.fillText(label, x, y > 16 ? y - 4 : y + 16);
-            });
-
-            if (unknownDetected) {
-                document.getElementById('custom-label').style.display = 'block';
-            } else {
-                document.getElementById('custom-label').style.display = 'none';
-                pendingObject = null;
-            }
-
-            requestAnimationFrame(detectFrame);
-        }
-
-        function addCustomLabel() {
-            const input = document.getElementById('label-input');
-            if (input.value.trim() !== "" && pendingObject) {
-                customObjects.push({
-                    name: input.value.trim(),
-                    bbox: pendingObject.bbox
-                });
-                console.log("Custom objects:", customObjects);
-                input.value = "";
-                pendingObject = null;
-                document.getElementById('custom-label').style.display = 'none';
-            }
-        }
-
-        init();
-    </script>
+    main();
+  </script>
 </body>
 </html>
