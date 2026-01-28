@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <title>Smart Custom Object Detector</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
     <style>
         body { font-family: 'Press Start 2P', monospace; text-align: center; margin: 20px; }
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        video, canvas { border: 2px solid black; }
+        video, canvas { border: 2px solid black; max-width: 100%; }
         #custom-label { margin-top: 10px; display: none; }
         input, button { font-family: 'Press Start 2P', monospace; font-size: 12px; }
     </style>
 </head>
 <body>
     <h1>Smart Custom Object Detector</h1>
-    <video id="video" width="640" height="480" autoplay muted></video>
+    <video id="video" width="640" height="480" autoplay muted playsinline></video>
     <canvas id="canvas" width="640" height="480"></canvas>
     <div id="custom-label">
         <input type="text" id="label-input" placeholder="Enter object name">
@@ -30,30 +30,43 @@
 
         // Store custom objects with bounding boxes
         const customObjects = [];
-
-        // Temporary object waiting for name
         let pendingObject = null;
 
         async function init() {
+            // Load COCO-SSD model (pre-trained on 80 common objects)
             model = await cocoSsd.load();
             console.log("Model loaded");
             startVideo();
         }
 
         function startVideo() {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    video.srcObject = stream;
-                    video.onloadedmetadata = () => {
-                        video.play();
-                        detectFrame();
-                    };
-                })
-                .catch(err => console.error("Error accessing camera: ", err));
+            // Use back camera if available
+            navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { exact: "environment" } }
+            })
+            .then(stream => {
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    detectFrame();
+                };
+            })
+            .catch(err => {
+                console.warn("Back camera not available, using default camera.", err);
+                // Fallback to default camera
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        video.srcObject = stream;
+                        video.onloadedmetadata = () => {
+                            video.play();
+                            detectFrame();
+                        };
+                    });
+            });
         }
 
+        // Simple bounding box overlap checker
         function bboxOverlap(b1, b2) {
-            // Simple overlap check
             const [x1, y1, w1, h1] = b1;
             const [x2, y2, w2, h2] = b2;
             return !(x1 + w1 < x2 || x1 > x2 + w2 || y1 + h1 < y2 || y1 > y2 + h2);
@@ -71,18 +84,16 @@
                 const [x, y, width, height] = pred.bbox;
                 let label = pred.class;
 
-                // Check if this overlaps a known custom object
+                // Check for custom object matches
                 const match = customObjects.find(obj => bboxOverlap(obj.bbox, pred.bbox));
-                if (match) {
-                    label = match.name;
-                } else if (!['person','cat','dog','car','bottle','chair'].includes(label)) {
+                if (match) label = match.name;
+                else if (!['person','cat','dog','car','bottle','chair','laptop','cell phone','book'].includes(label)) {
                     label = "Unknown";
                     unknownDetected = true;
-                    // If we don't already have a pending object, set it
                     if (!pendingObject) pendingObject = { bbox: pred.bbox };
                 }
 
-                // Draw bounding box
+                // Draw box
                 ctx.strokeStyle = (label === "Unknown") ? 'red' : 'lime';
                 ctx.lineWidth = 3;
                 ctx.strokeRect(x, y, width, height);
@@ -93,12 +104,11 @@
                 ctx.fillText(label, x, y > 16 ? y - 4 : y + 16);
             });
 
-            // Show input if unknown detected
             if (unknownDetected) {
                 document.getElementById('custom-label').style.display = 'block';
             } else {
                 document.getElementById('custom-label').style.display = 'none';
-                pendingObject = null; // Clear if nothing unknown
+                pendingObject = null;
             }
 
             requestAnimationFrame(detectFrame);
