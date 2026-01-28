@@ -1,13 +1,124 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Custom Object Detector</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <style>
+        body { font-family: 'Press Start 2P', monospace; text-align: center; margin: 20px; }
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        video, canvas { border: 2px solid black; }
+        #custom-label { margin-top: 10px; display: none; }
+        input, button { font-family: 'Press Start 2P', monospace; font-size: 12px; }
+    </style>
+</head>
 <body>
-<video id="video" width="640" height="480" autoplay></video>
-<script>
-navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
-        document.getElementById('video').srcObject = stream;
-    })
-    .catch(err => console.error("Camera error:", err));
-</script>
+    <h1>Smart Custom Object Detector</h1>
+    <video id="video" width="640" height="480" autoplay muted></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <div id="custom-label">
+        <input type="text" id="label-input" placeholder="Enter object name">
+        <button onclick="addCustomLabel()">Add Label</button>
+    </div>
+
+    <script>
+        let model;
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Store custom objects with bounding boxes
+        const customObjects = [];
+
+        // Temporary object waiting for name
+        let pendingObject = null;
+
+        async function init() {
+            model = await cocoSsd.load();
+            console.log("Model loaded");
+            startVideo();
+        }
+
+        function startVideo() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        detectFrame();
+                    };
+                })
+                .catch(err => console.error("Error accessing camera: ", err));
+        }
+
+        function bboxOverlap(b1, b2) {
+            // Simple overlap check
+            const [x1, y1, w1, h1] = b1;
+            const [x2, y2, w2, h2] = b2;
+            return !(x1 + w1 < x2 || x1 > x2 + w2 || y1 + h1 < y2 || y1 > y2 + h2);
+        }
+
+        async function detectFrame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const predictions = await model.detect(video);
+
+            let unknownDetected = false;
+
+            predictions.forEach(pred => {
+                const [x, y, width, height] = pred.bbox;
+                let label = pred.class;
+
+                // Check if this overlaps a known custom object
+                const match = customObjects.find(obj => bboxOverlap(obj.bbox, pred.bbox));
+                if (match) {
+                    label = match.name;
+                } else if (!['person','cat','dog','car','bottle','chair'].includes(label)) {
+                    label = "Unknown";
+                    unknownDetected = true;
+                    // If we don't already have a pending object, set it
+                    if (!pendingObject) pendingObject = { bbox: pred.bbox };
+                }
+
+                // Draw bounding box
+                ctx.strokeStyle = (label === "Unknown") ? 'red' : 'lime';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x, y, width, height);
+
+                // Draw label
+                ctx.fillStyle = (label === "Unknown") ? 'red' : 'lime';
+                ctx.font = "16px 'Press Start 2P'";
+                ctx.fillText(label, x, y > 16 ? y - 4 : y + 16);
+            });
+
+            // Show input if unknown detected
+            if (unknownDetected) {
+                document.getElementById('custom-label').style.display = 'block';
+            } else {
+                document.getElementById('custom-label').style.display = 'none';
+                pendingObject = null; // Clear if nothing unknown
+            }
+
+            requestAnimationFrame(detectFrame);
+        }
+
+        function addCustomLabel() {
+            const input = document.getElementById('label-input');
+            if (input.value.trim() !== "" && pendingObject) {
+                customObjects.push({
+                    name: input.value.trim(),
+                    bbox: pendingObject.bbox
+                });
+                console.log("Custom objects:", customObjects);
+                input.value = "";
+                pendingObject = null;
+                document.getElementById('custom-label').style.display = 'none';
+            }
+        }
+
+        init();
+    </script>
 </body>
 </html>
