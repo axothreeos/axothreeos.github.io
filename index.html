@@ -1,214 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Hand Tracking With Camera Overlay</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-html, body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  background: black;
-  overflow: hidden;
-  font-family: Arial, sans-serif;
-}
-
-video {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 0;
-}
-
-canvas {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  pointer-events: none;
-}
-
-#startBtn {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 16px 26px;
-  font-size: 18px;
-  border: none;
-  border-radius: 8px;
-  background: #00ff88;
-  z-index: 10;
-}
-
-#ui {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 10;
-  color: white;
-  background: rgba(0,0,0,0.6);
-  padding: 10px;
-  border-radius: 8px;
-}
-
-#ui button {
-  margin-top: 6px;
-  width: 160px;
-  padding: 6px;
-  background: #222;
-  color: white;
-  border: none;
-  border-radius: 6px;
-}
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+    <meta charset="UTF-8">
+    <title>Smart Custom Object Detector</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <style>
+        body { font-family: 'Press Start 2P', monospace; text-align: center; margin: 20px; }
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        video, canvas { border: 2px solid black; }
+        #custom-label { margin-top: 10px; display: none; }
+        input, button { font-family: 'Press Start 2P', monospace; font-size: 12px; }
+    </style>
 </head>
-
 <body>
+    <h1>Smart Custom Object Detector</h1>
+    <video id="video" width="640" height="480" autoplay muted></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <div id="custom-label">
+        <input type="text" id="label-input" placeholder="Enter object name">
+        <button onclick="addCustomLabel()">Add Label</button>
+    </div>
 
-<button id="startBtn">Start Camera</button>
+    <script>
+        let model;
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
-<div id="ui" style="display:none">
-  Fingers: <span id="fingerCount">0</span><br>
-  <button id="toggleViz">Toggle Visualization</button>
-</div>
+        // Store custom objects with bounding boxes
+        const customObjects = [];
 
-<video id="video" playsinline></video>
-<canvas id="canvas"></canvas>
+        // Temporary object waiting for name
+        let pendingObject = null;
 
-<script>
-const video = document.getElementById("video")
-const canvas = document.getElementById("canvas")
-const ctx = canvas.getContext("2d")
+        async function init() {
+            model = await cocoSsd.load();
+            console.log("Model loaded");
+            startVideo();
+        }
 
-const startBtn = document.getElementById("startBtn")
-const ui = document.getElementById("ui")
-const fingerLabel = document.getElementById("fingerCount")
-const toggleVizBtn = document.getElementById("toggleViz")
+        function startVideo() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        detectFrame();
+                    };
+                })
+                .catch(err => console.error("Error accessing camera: ", err));
+        }
 
-let detector
-let showViz = true
+        function bboxOverlap(b1, b2) {
+            // Simple overlap check
+            const [x1, y1, w1, h1] = b1;
+            const [x2, y2, w2, h2] = b2;
+            return !(x1 + w1 < x2 || x1 > x2 + w2 || y1 + h1 < y2 || y1 > y2 + h2);
+        }
 
-const connections = [
-  [0,1],[1,2],[2,3],[3,4],
-  [0,5],[5,6],[6,7],[7,8],
-  [5,9],[9,10],[10,11],[11,12],
-  [9,13],[13,14],[14,15],[15,16],
-  [13,17],[17,18],[18,19],[19,20]
-]
+        async function detectFrame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-async function initModel() {
-  detector = await handPoseDetection.createDetector(
-    handPoseDetection.SupportedModels.MediaPipeHands,
-    {
-      runtime: "tfjs",
-      modelType: "lite",
-      maxHands: 1
-    }
-  )
-}
+            const predictions = await model.detect(video);
 
-async function startCamera() {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: "environment" }
-  })
-  video.srcObject = stream
-  await video.play()
-  canvas.width = video.videoWidth
-  canvas.height = video.videoHeight
-}
+            let unknownDetected = false;
 
-function drawSkeleton(hand) {
-  ctx.strokeStyle = "#00ff88"
-  ctx.lineWidth = 3
-  for (const [a, b] of connections) {
-    const p1 = hand.keypoints[a]
-    const p2 = hand.keypoints[b]
-    ctx.beginPath()
-    ctx.moveTo(p1.x, p1.y)
-    ctx.lineTo(p2.x, p2.y)
-    ctx.stroke()
-  }
-}
+            predictions.forEach(pred => {
+                const [x, y, width, height] = pred.bbox;
+                let label = pred.class;
 
-function drawLandmarks(hand) {
-  ctx.fillStyle = "#ff0044"
-  for (const p of hand.keypoints) {
-    ctx.beginPath()
-    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2)
-    ctx.fill()
-  }
-}
+                // Check if this overlaps a known custom object
+                const match = customObjects.find(obj => bboxOverlap(obj.bbox, pred.bbox));
+                if (match) {
+                    label = match.name;
+                } else if (!['person','cat','dog','car','bottle','chair'].includes(label)) {
+                    label = "Unknown";
+                    unknownDetected = true;
+                    // If we don't already have a pending object, set it
+                    if (!pendingObject) pendingObject = { bbox: pred.bbox };
+                }
 
-function drawBoundingBox(hand) {
-  let minX = Infinity, minY = Infinity
-  let maxX = 0, maxY = 0
+                // Draw bounding box
+                ctx.strokeStyle = (label === "Unknown") ? 'red' : 'lime';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x, y, width, height);
 
-  for (const p of hand.keypoints) {
-    minX = Math.min(minX, p.x)
-    minY = Math.min(minY, p.y)
-    maxX = Math.max(maxX, p.x)
-    maxY = Math.max(maxY, p.y)
-  }
+                // Draw label
+                ctx.fillStyle = (label === "Unknown") ? 'red' : 'lime';
+                ctx.font = "16px 'Press Start 2P'";
+                ctx.fillText(label, x, y > 16 ? y - 4 : y + 16);
+            });
 
-  ctx.strokeStyle = "#ffffff"
-  ctx.lineWidth = 2
-  ctx.strokeRect(minX, minY, maxX - minX, maxY - minY)
-}
+            // Show input if unknown detected
+            if (unknownDetected) {
+                document.getElementById('custom-label').style.display = 'block';
+            } else {
+                document.getElementById('custom-label').style.display = 'none';
+                pendingObject = null; // Clear if nothing unknown
+            }
 
-function countFingers(hand) {
-  const tips = [8, 12, 16, 20]
-  const knuckles = [6, 10, 14, 18]
-  let count = 0
+            requestAnimationFrame(detectFrame);
+        }
 
-  for (let i = 0; i < tips.length; i++) {
-    if (hand.keypoints[tips[i]].y < hand.keypoints[knuckles[i]].y) {
-      count++
-    }
-  }
-  return count
-}
+        function addCustomLabel() {
+            const input = document.getElementById('label-input');
+            if (input.value.trim() !== "" && pendingObject) {
+                customObjects.push({
+                    name: input.value.trim(),
+                    bbox: pendingObject.bbox
+                });
+                console.log("Custom objects:", customObjects);
+                input.value = "";
+                pendingObject = null;
+                document.getElementById('custom-label').style.display = 'none';
+            }
+        }
 
-async function loop() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-  const hands = await detector.estimateHands(video)
-  if (hands.length > 0) {
-    const hand = hands[0]
-    const fingers = countFingers(hand)
-    fingerLabel.textContent = fingers
-
-    if (showViz) {
-      drawBoundingBox(hand)
-      drawSkeleton(hand)
-      drawLandmarks(hand)
-    }
-  } else {
-    fingerLabel.textContent = "0"
-  }
-
-  requestAnimationFrame(loop)
-}
-
-toggleVizBtn.onclick = () => {
-  showViz = !showViz
-}
-
-startBtn.onclick = async () => {
-  startBtn.style.display = "none"
-  ui.style.display = "block"
-  await initModel()
-  await startCamera()
-  loop()
-}
-</script>
-
+        init();
+    </script>
 </body>
 </html>
