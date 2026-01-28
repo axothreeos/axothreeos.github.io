@@ -3,90 +3,129 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Back Camera Hand Detection</title>
+<title>3D Hand Visualization</title>
 <style>
-  body { margin: 0; font-family: sans-serif; background: #111; color: #fff; display: flex; flex-direction: column; align-items: center; }
-  #container { position: relative; margin-top: 10px; }
+  body { margin: 0; background: #111; color: #fff; font-family: Arial, sans-serif; text-align: center; }
+  #container { position: relative; width: 640px; margin: auto; }
   video, canvas { border-radius: 8px; }
   canvas { position: absolute; top: 0; left: 0; }
-  #log { margin-top: 10px; max-width: 700px; font-size: 14px; }
+  #log { margin-top: 8px; font-size: 14px; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js" crossorigin="anonymous"></script>
 </head>
 <body>
-<h1>Back Camera Hand Detection</h1>
+<h2>3D Hand Visualization (Back Camera)</h2>
 <div id="container">
   <video id="video" width="640" height="480" autoplay muted playsinline></video>
   <canvas id="canvas" width="640" height="480"></canvas>
 </div>
-<div id="log">Loading model...</div>
-
-<!-- MediaPipe Hands -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+<div id="log">Initializing…</div>
 
 <script>
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const log = document.getElementById('log');
+(async () => {
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const log = document.getElementById("log");
 
-async function getBackCameraStream() {
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  // Find a video input labeled as back camera
-  const backCamera = devices.find(d => d.kind === 'videoinput' && /back|rear/i.test(d.label));
-  
-  const constraints = backCamera
-    ? { video: { deviceId: { exact: backCamera.deviceId }, width: 640, height: 480 } }
-    : { video: { facingMode: { exact: 'environment' }, width: 640, height: 480 } }; // fallback
-
-  return await navigator.mediaDevices.getUserMedia(constraints);
-}
-
-async function setupCamera() {
-  const stream = await getBackCameraStream();
-  video.srcObject = stream;
-  return new Promise(resolve => video.onloadedmetadata = () => resolve(video));
-}
-
-// Initialize MediaPipe Hands
-const hands = new Hands({locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-hands.setOptions({
-  maxNumHands: 2,
-  modelComplexity: 1,
-  minDetectionConfidence: 0.85,
-  minTrackingConfidence: 0.85
-});
-hands.onResults(onHandsResults);
-
-// Draw hand landmarks
-function onHandsResults(results) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  if (results.multiHandLandmarks) {
-    for (const landmarks of results.multiHandLandmarks) {
-      drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: 'lime', lineWidth: 2 });
-      drawLandmarks(ctx, landmarks, { color: 'red', lineWidth: 1 });
-    }
-    log.innerHTML = `Hands detected: ${results.multiHandLandmarks.length}`;
-  } else {
-    log.innerHTML = "No hands detected";
+  // Force back camera
+  async function setupBackCamera() {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const backCam = devices.find(d => d.kind === "videoinput" && /back|rear/i.test(d.label));
+    const constraints = backCam
+      ? { video: { deviceId: { exact: backCam.deviceId }, width: 640, height: 480 } }
+      : { video: { facingMode: "environment", width: 640, height: 480 } };
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    return new Promise(r => video.onloadedmetadata = r);
   }
-}
 
-// Main loop
-async function detectHands() {
-  await hands.send({ image: video });
-  video.requestVideoFrameCallback(detectHands);
-}
+  await setupBackCamera();
 
-// Start everything
-async function main() {
-  await setupCamera();
-  log.innerHTML = "Camera ready, loading hand model...";
-  detectHands();
-}
+  const { HandLandmarker, FilesetResolver } = window.tasksVision;
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+  );
 
-main();
+  const landmarker = await HandLandmarker.createFromOptions(vision, {
+    baseOptions: { modelAssetPath: "models/hand_landmarker.task" },
+    numHands: 2,
+    runningMode: "video",
+    minHandDetectionConfidence: 0.7,
+    minHandPresenceConfidence: 0.7,
+    minTrackingConfidence: 0.5
+  });
+
+  log.textContent = "Hand Landmarker Loaded!";
+
+  // Define hand connections (same as MediaPipe)
+  const HAND_CONNECTIONS = [
+    [0,1],[1,2],[2,3],[3,4],     // Thumb
+    [0,5],[5,6],[6,7],[7,8],     // Index
+    [0,9],[9,10],[10,11],[11,12],// Middle
+    [0,13],[13,14],[14,15],[15,16],// Ring
+    [0,17],[17,18],[18,19],[19,20] // Pinky
+  ];
+
+  function draw3DHand(result) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    if (!result.handedness) return;
+
+    result.handedness.forEach((hand, i) => {
+      const landmarks = result.landmarks[i];
+      if (!landmarks) return;
+
+      // Draw lines between connections
+      ctx.strokeStyle = "lime";
+      ctx.lineWidth = 2;
+      HAND_CONNECTIONS.forEach(([start, end]) => {
+        const lm1 = landmarks[start];
+        const lm2 = landmarks[end];
+
+        const x1 = lm1.x * canvas.width;
+        const y1 = lm1.y * canvas.height;
+        const x2 = lm2.x * canvas.width;
+        const y2 = lm2.y * canvas.height;
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      });
+
+      // Draw landmarks as points (with size scaled by depth)
+      landmarks.forEach(lm => {
+        const x = lm.x * canvas.width;
+        const y = lm.y * canvas.height;
+        const z = lm.z; // Z is relative depth, negative toward camera
+        const radius = Math.max(4 - z * 20, 2); // points closer = bigger
+
+        ctx.beginPath();
+        ctx.fillStyle = "red";
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+
+      ctx.fillStyle = "#fff";
+      ctx.fillText(hand.categoryName, landmarks[0].x * canvas.width + 5, landmarks[0].y * canvas.height - 10);
+    });
+  }
+
+  let lastVideoTime = -1;
+  function detectLoop() {
+    if (video.currentTime !== lastVideoTime) {
+      const result = landmarker.detectForVideo(video, performance.now());
+      draw3DHand(result);
+      lastVideoTime = video.currentTime;
+    }
+    requestAnimationFrame(detectLoop);
+  }
+
+  detectLoop();
+
+})();
 </script>
 </body>
 </html>
