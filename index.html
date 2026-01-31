@@ -3,45 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Axo's Portfolio</title>
+<title>Axo's Portfolio - XP Simulator</title>
 <style>
-/* ---------- GENERAL RESET ---------- */
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;height:100%;font-family:Tahoma,Verdana,sans-serif;background:#000;overflow:hidden;}
 a{color:#003cff;font-weight:bold;text-decoration:none;}
-
-/* ---------- CRT OVERLAY ---------- */
 .crt{position:relative;width:100%;height:100%;overflow:hidden;}
 .crt::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to bottom,rgba(0,0,0,0.15),rgba(0,0,0,0.15) 1px,transparent 1px,transparent 2px);pointer-events:none;z-index:10;}
 .crt::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,transparent 60%,rgba(0,0,0,0.45));pointer-events:none;z-index:11;}
-
-/* ---------- BOOT SCREEN ---------- */
 #boot{position:absolute;inset:0;background:#000;color:#f7e34b;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;text-align:center;z-index:20;}
 #boot .progress{width:200px;height:10px;background:#003cff;margin-top:10px;border:2px solid #fff;position:relative;}
 #boot .progress span{display:block;height:100%;background:#f7e34b;width:0%;}
-
-/* ---------- DESKTOP ---------- */
-#desktop{display:none;width:100%;height:100%;background:linear-gradient(#005eff,#003cff);padding:12px;position:relative;overflow:hidden;}
+#desktop{display:none;width:100%;height:100%;background:url('https://upload.wikimedia.org/wikipedia/en/2/27/Bliss_%28Windows_XP%29.png') center/cover no-repeat;position:relative;overflow:hidden;}
 .icons{display:grid;grid-template-columns:repeat(auto-fill,72px);gap:14px;max-width:360px;}
 .icon{text-align:center;font-size:11px;color:#fff;cursor:pointer;user-select:none;transition:transform 0.15s;}
 .icon:hover{transform:translateY(-4px);}
 .icon div{width:48px;height:48px;margin:0 auto 4px;background:#f7e34b;border:2px solid #000;}
-
-/* ---------- TASKBAR ---------- */
 #taskbar{position:absolute;bottom:0;left:0;width:100%;height:32px;background:#c0c0c0;border-top:2px solid #000;display:flex;align-items:center;padding:0 4px;font-size:12px;}
 #taskbar button{margin-right:2px;background:#f7e34b;border:1px solid #000;padding:2px 6px;cursor:pointer;}
-
-/* ---------- WINDOWS ---------- */
+#startButton{background:#00aaff;color:#fff;border:1px solid #000;padding:2px 6px;margin-right:4px;cursor:pointer;}
+#startMenu{position:absolute;bottom:32px;left:0;width:160px;background:#c0c0c0;border:2px solid #000;display:none;flex-direction:column;z-index:50;}
+.startItem{padding:4px 6px;border-bottom:1px solid #000;cursor:pointer;}
+.startItem:hover{background:#00aaff;color:#fff;}
 .window{position:absolute;top:60px;left:20px;width:min(92vw,520px);background:#c0c0c0;border:2px solid #000;box-shadow:4px 4px 0 #000;display:none;z-index:5;}
-.title-bar{background:linear-gradient(#0a2a66,#003cff);color:#fff;padding:4px 6px;font-size:12px;cursor:grab;}
+.title-bar{background:linear-gradient(#0a2a66,#003cff);color:#fff;padding:4px 6px;font-size:12px;cursor:grab;display:flex;justify-content:space-between;align-items:center;}
+.win-btn{margin-left:4px;background:#f7e34b;color:#000;border:1px solid #000;width:18px;text-align:center;cursor:pointer;}
 .content{background:#fff8c4;padding:10px;font-size:13px;color:#0a2a66;}
-.project{background:#fff;border:1px dashed #0a2a66;padding:6px;margin-top:6px;}
 canvas{display:block;margin:8px auto;background:#0a2a66;border:2px solid #003cff;touch-action:none;}
 .touch-controls{display:grid;grid-template-columns:repeat(3,44px);gap:4px;justify-content:center;margin-top:6px;}
 .touch-btn{background:#003cff;color:#fff;text-align:center;padding:8px;font-size:12px;border:1px solid #000;}
 @media(min-width:700px){.touch-controls{display:none;}}
-
-/* ---------- FLOATING SPARKLES ---------- */
 .sparkle{position:absolute;width:6px;height:6px;background:#fff;border-radius:50%;opacity:0.6;pointer-events:none;animation:twinkle 2s infinite;}
 @keyframes twinkle{0%,100%{opacity:0.6;}50%{opacity:1;}}
 </style>
@@ -72,21 +63,35 @@ Welcome to Axo's Portfolio
 </div>
 
 <!-- TASKBAR -->
-<div id="taskbar"></div>
+<div id="taskbar">
+<button id="startButton">Start</button>
+<div id="taskButtons"></div>
+</div>
 
-<!-- ABOUT WINDOW -->
+<!-- START MENU -->
+<div id="startMenu">
+<div class="startItem" onclick="openWin('about')">About</div>
+<div class="startItem" onclick="openWin('pixl2d')">Pixl2D</div>
+<div class="startItem" onclick="openWin('rendr3d')">Rendr3D</div>
+<div class="startItem" onclick="openWin('roblox')">Roblox</div>
+<div class="startItem" onclick="openWin('terminal')">Terminal</div>
+<div class="startItem" onclick="openWin('settings')">Settings</div>
+</div>
+
+<!-- WINDOWS -->
 <div class="window" id="about">
-<div class="title-bar">About</div>
-<div class="content">
-<p>Hi! I'm a developer building games, engines, and interactive systems. This portfolio is a semi-retro PC simulator showcasing my work.</p>
+<div class="title-bar">About
+<span class="win-btn minimize">_</span><span class="win-btn close">X</span>
 </div>
+<div class="content"><p>Hi! I'm a developer building engines, games, and interactive systems. This portfolio is a semi-retro PC simulator showcasing my work.</p></div>
 </div>
 
-<!-- PIXL2D WINDOW -->
 <div class="window" id="pixl2d">
-<div class="title-bar">Pixl2D Engine</div>
+<div class="title-bar">Pixl2D Engine
+<span class="win-btn minimize">_</span><span class="win-btn close">X</span>
+</div>
 <div class="content">
-<p>Mini 2D engine demo. Use arrow keys or touch buttons.</p>
+<p>Mini 2D engine demo. Arrow keys or touch buttons.</p>
 <canvas id="pixlDemo" width="260" height="180"></canvas>
 <div class="touch-controls">
 <button class="touch-btn" data-dir="up">↑</button>
@@ -97,11 +102,12 @@ Welcome to Axo's Portfolio
 </div>
 </div>
 
-<!-- RENDR3D WINDOW -->
 <div class="window" id="rendr3d">
-<div class="title-bar">Rendr3D Demo</div>
+<div class="title-bar">Rendr3D Demo
+<span class="win-btn minimize">_</span><span class="win-btn close">X</span>
+</div>
 <div class="content">
-<p>Mini 3D “Doom-lite” scene. Reach the yellow cube to win!</p>
+<p>Mini 3D “Doom-lite” scene. Reach the yellow cube to unlock Bobm Tag Easter Egg!</p>
 <canvas id="rendrDemo" width="260" height="180"></canvas>
 <div class="touch-controls">
 <button class="touch-btn" data-r="forward">↑</button>
@@ -112,50 +118,50 @@ Welcome to Axo's Portfolio
 </div>
 </div>
 
-<!-- BOBM TAG EASTER EGG -->
 <div class="window" id="bobmtag">
-<div class="title-bar">Bobm Tag Easter Egg</div>
+<div class="title-bar">Bobm Tag Easter Egg
+<span class="win-btn minimize">_</span><span class="win-btn close">X</span>
+</div>
 <div class="content">
 <p>Congratulations! You unlocked my first project: Bobm Tag.</p>
-<p>Mini “hot potato” demo. Tap/click the bomb to pass it.</p>
+<p>Mini hot-potato demo. Tap/click the bomb to pass it.</p>
 <canvas id="bobmDemo" width="260" height="180"></canvas>
 </div>
 </div>
 
-<!-- ROBLOX WINDOW -->
 <div class="window" id="roblox">
-<div class="title-bar">Roblox Profile</div>
+<div class="title-bar">Roblox Profile
+<span class="win-btn minimize">_</span><span class="win-btn close">X</span>
+</div>
 <div class="content">
 <p>Platform for prototyping engines and interactive systems.</p>
 <a href="https://www.roblox.com/users/3893603034/profile?friendshipSourceType=PlayerSearch" target="_blank">Open Roblox Profile</a>
 </div>
 </div>
 
-<!-- TERMINAL -->
 <div class="window" id="terminal">
-<div class="title-bar">Terminal</div>
-<div class="content">
-<p>Fun little terminal window. Type 'help' for options.</p>
+<div class="title-bar">Terminal
+<span class="win-btn minimize">_</span><span class="win-btn close">X</span>
 </div>
+<div class="content"><p>Fun little terminal window. Type 'help' for options.</p></div>
 </div>
 
-<!-- SETTINGS -->
 <div class="window" id="settings">
-<div class="title-bar">Settings</div>
-<div class="content">
-<p>Retro theme settings go here. Adjust CRT intensity, toggle sparkles, etc.</p>
+<div class="title-bar">Settings
+<span class="win-btn minimize">_</span><span class="win-btn close">X</span>
 </div>
+<div class="content"><p>Retro theme settings go here.</p></div>
 </div>
 
 </div>
 
 <script>
-// ---------- BOOT ANIMATION ----------
-let progress = 0;
-let bootSpan = document.querySelector("#boot .progress span");
-let bootInterval = setInterval(()=>{
-  progress+=1;
-  bootSpan.style.width = progress + "%";
+// ---------- BOOT ----------
+let progress=0;
+let bootSpan=document.querySelector("#boot .progress span");
+let bootInterval=setInterval(()=>{
+  progress++;
+  bootSpan.style.width=progress+"%";
   if(progress>=100){
     clearInterval(bootInterval);
     document.getElementById("boot").style.display="none";
@@ -164,103 +170,124 @@ let bootInterval = setInterval(()=>{
   }
 },20);
 
-// ---------- DESKTOP AND WINDOWS ----------
+// ---------- DESKTOP & WINDOWS ----------
+const taskbar=document.getElementById("taskButtons");
+const windows={};
 function openWin(id){
-  document.querySelectorAll(".window").forEach(w=>w.style.display="none");
-  document.getElementById(id).style.display="block";
-  updateTaskbar(id);
-}
-function updateTaskbar(id){
-  const taskbar = document.getElementById("taskbar");
-  if(!document.getElementById("taskbtn-"+id)){
-    let btn = document.createElement("button");
+  let w=document.getElementById(id);
+  w.style.display="block"; w.style.zIndex=5;
+  if(!windows[id]){
+    let btn=document.createElement("button");
     btn.id="taskbtn-"+id;
     btn.textContent=id;
-    btn.onclick=()=>openWin(id);
+    btn.onclick=()=>w.style.display="block";
     taskbar.appendChild(btn);
+    windows[id]=btn;
   }
 }
+document.querySelectorAll(".win-btn.close").forEach(btn=>{
+  btn.onclick=e=>{
+    let w=btn.closest(".window"); w.style.display="none";
+    let tb=document.getElementById("taskbtn-"+w.id); if(tb) tb.remove();
+  }
+});
+document.querySelectorAll(".win-btn.minimize").forEach(btn=>{
+  btn.onclick=e=>{
+    let w=btn.closest(".window"); w.style.display="none";
+  }
+});
 
-// ---------- PIXL2D DEMO ----------
-const pd = document.getElementById("pixlDemo");
+// Start menu toggle
+const startBtn=document.getElementById("startButton");
+const startMenu=document.getElementById("startMenu");
+startBtn.onclick=e=>startMenu.style.display=startMenu.style.display==='flex'?'none':'flex';
+document.addEventListener('click',e=>{
+  if(!startMenu.contains(e.target)&&e.target!==startBtn) startMenu.style.display='none';
+});
+
+// ---------- PIXL2D ----------
+const pd=document.getElementById("pixlDemo");
 if(pd){
-  const ctx = pd.getContext("2d");
+  const ctx=pd.getContext("2d");
   const pl={x:20,y:20,s:12,v:2};
   const blocks=[{x:60,y:40,w:120,h:16},{x:40,y:100,w:16,h:60},{x:160,y:20,w:16,h:120}];
   const keys={};
   window.addEventListener("keydown",e=>keys[e.key]=true);
   window.addEventListener("keyup",e=>keys[e.key]=false);
-
-  function collide(a,b){return a.x<a.w+b.x && a.x+a.s>b.x && a.y<b.h+b.y && a.y+a.s>b.y;}
-
+  function collide(a,b){return a.x<a.x+b.w&&a.x+a.s>b.x&&a.y<b.y+b.h&&a.y+a.s>b.y;}
   function stepPixl(){
     let nx=pl.x,ny=pl.y;
-    if(keys.ArrowUp) ny-=pl.v;
-    if(keys.ArrowDown) ny+=pl.v;
-    if(keys.ArrowLeft) nx-=pl.v;
-    if(keys.ArrowRight) nx+=pl.v;
-    const t={...pl,x:nx,y:ny};
-    if(!blocks.some(b=>collide(t,b))){pl.x=nx;pl.y=ny;}
+    if(keys.ArrowUp) ny-=pl.v;if(keys.ArrowDown) ny+=pl.v;
+    if(keys.ArrowLeft) nx-=pl.v;if(keys.ArrowRight) nx+=pl.v;
+    let t={...pl,x:nx,y:ny};
+    if(!blocks.some(b=>!(t.x<t.x+b.w&&t.x+t.s>b.x&&t.y<b.y+b.h&&t.y+t.s>b.y))){pl.x=nx;pl.y=ny;}
     ctx.clearRect(0,0,pd.width,pd.height);
     ctx.fillStyle="#f7e34b"; ctx.fillRect(pl.x,pl.y,pl.s,pl.s);
     ctx.fillStyle="#003cff"; blocks.forEach(b=>ctx.fillRect(b.x,b.y,b.w,b.h));
     requestAnimationFrame(stepPixl);
-  }
-  stepPixl();
-
-  // Touch buttons
+  } stepPixl();
   document.querySelectorAll("#pixl2d .touch-btn").forEach(btn=>{
-    btn.addEventListener("touchstart",(e)=>{
-      e.preventDefault();
-      keys["Arrow"+btn.dataset.dir.charAt(0).toUpperCase()+btn.dataset.dir.slice(1)] = true;
+    btn.addEventListener("touchstart",e=>{
+      e.preventDefault(); keys["Arrow"+btn.dataset.dir.charAt(0).toUpperCase()+btn.dataset.dir.slice(1)]=true;
     });
-    btn.addEventListener("touchend",(e)=>{
-      e.preventDefault();
-      keys["Arrow"+btn.dataset.dir.charAt(0).toUpperCase()+btn.dataset.dir.slice(1)] = false;
+    btn.addEventListener("touchend",e=>{
+      e.preventDefault(); keys["Arrow"+btn.dataset.dir.charAt(0).toUpperCase()+btn.dataset.dir.slice(1)]=false;
     });
   });
 }
 
-// ---------- RENDR3D DEMO ----------
-const rd = document.getElementById("rendrDemo");
+// ---------- RENDR3D FAKE 3D ----------
+const rd=document.getElementById("rendrDemo");
 if(rd){
-  const ctx = rd.getContext("2d");
-  let player={x:130,y:150},goal={x:200,y:50,size:12};
-  const walls=[{x:60,y:60,w:140,h:16},{x:40,y:100,w:16,h:60},{x:160,y:20,w:16,h:120}];
+  const ctx=rd.getContext("2d");
+  let player={x:0,z:0,angle:0};
+  const goal={x:4,z:4,size:0.5};
+  const walls=[{x:2,z:1},{x:2,z:2},{x:3,z:3}];
+  const scale=60;
   const keys={};
   window.addEventListener("keydown",e=>keys[e.key]=true);
   window.addEventListener("keyup",e=>keys[e.key]=false);
 
-  function stepRendr(){
-    if(keys["w"]||keys["ArrowUp"]) player.y-=2;
-    if(keys["s"]||keys["ArrowDown"]) player.y+=2;
-    if(keys["a"]||keys["ArrowLeft"]) player.x-=2;
-    if(keys["d"]||keys["ArrowRight"]) player.x+=2;
-    ctx.clearRect(0,0,rd.width,rd.height);
-    ctx.fillStyle="#f7e34b"; ctx.fillRect(goal.x,goal.y,goal.size,goal.size);
-    ctx.fillStyle="#003cff"; walls.forEach(w=>ctx.fillRect(w.x,w.y,w.w,w.h));
-    ctx.fillStyle="#ff0033"; ctx.fillRect(player.x,player.y,12,12);
+  function project(x,y,z){
+    const px=rd.width/2 + (x-player.x)*scale/(z+5-player.z||1);
+    const py=rd.height/2 - y*scale/(z+5-player.z||1);
+    return {px,py};
+  }
 
-    // Win condition
-    if(player.x<goal.x+goal.size && player.x+12>goal.x && player.y<goal.y+goal.size && player.y+12>goal.y){
+  function stepRendr(){
+    if(keys["w"]||keys["ArrowUp"]){player.z+=0.05*Math.cos(player.angle);player.x+=0.05*Math.sin(player.angle);}
+    if(keys["s"]||keys["ArrowDown"]){player.z-=0.05*Math.cos(player.angle);player.x-=0.05*Math.sin(player.angle);}
+    if(keys["a"]||keys["ArrowLeft"]){player.angle-=0.05;}
+    if(keys["d"]||keys["ArrowRight"]){player.angle+=0.05;}
+    ctx.clearRect(0,0,rd.width,rd.height);
+    // walls
+    ctx.fillStyle="#003cff"; walls.forEach(w=>{
+      let s=scale*0.5/(Math.max(0.1,w.z+5-player.z));
+      ctx.fillRect(rd.width/2 + (w.x-player.x)*scale/(w.z+5-player.z),rd.height/2-s/2,s,s);
+    });
+    // goal
+    ctx.fillStyle="#f7e34b";
+    ctx.fillRect(rd.width/2 + (goal.x-player.x)*scale/(goal.z+5-player.z),rd.height/2-5,10,10);
+    // player representation (optional)
+    ctx.fillStyle="#ff0033"; ctx.fillRect(rd.width/2-3,rd.height/2-3,6,6);
+
+    // win check
+    if(Math.hypot(player.x-goal.x,player.z-goal.z)<0.5){
       alert("You reached the goal! Bobm Tag Easter Egg unlocked.");
       openWin("bobmtag");
     }
-
     requestAnimationFrame(stepRendr);
   }
   stepRendr();
-
-  // Touch buttons
   document.querySelectorAll("#rendr3d .touch-btn").forEach(btn=>{
-    btn.addEventListener("touchstart",(e)=>{
+    btn.addEventListener("touchstart",e=>{
       e.preventDefault();
       if(btn.dataset.r==="forward") keys["w"]=true;
       if(btn.dataset.r==="back") keys["s"]=true;
       if(btn.dataset.r==="left") keys["a"]=true;
       if(btn.dataset.r==="right") keys["d"]=true;
     });
-    btn.addEventListener("touchend",(e)=>{
+    btn.addEventListener("touchend",e=>{
       e.preventDefault();
       if(btn.dataset.r==="forward") keys["w"]=false;
       if(btn.dataset.r==="back") keys["s"]=false;
@@ -270,37 +297,22 @@ if(rd){
   });
 }
 
-// ---------- BOBM TAG DEMO ----------
-const bd = document.getElementById("bobmDemo");
+// ---------- BOBM TAG ----------
+const bd=document.getElementById("bobmDemo");
 if(bd){
-  const ctx = bd.getContext("2d");
+  const ctx=bd.getContext("2d");
   let bomb={x:20,y:20,s:12};
   let positions=[{x:20,y:20},{x:100,y:20},{x:100,y:140},{x:20,y:140},{x:130,y:80}];
-
-  function moveBomb(){
-    bomb=positions[Math.floor(Math.random()*positions.length)];
-  }
+  function moveBomb(){bomb=positions[Math.floor(Math.random()*positions.length)];}
   setInterval(moveBomb,800);
-
-  function stepBobm(){
-    ctx.clearRect(0,0,bd.width,bd.height);
-    ctx.fillStyle="#ff0033"; ctx.fillRect(bomb.x,bomb.y,bomb.s,bomb.s);
-    requestAnimationFrame(stepBobm);
-  }
+  function stepBobm(){ctx.clearRect(0,0,bd.width,bd.height);ctx.fillStyle="#ff0033";ctx.fillRect(bomb.x,bomb.y,bomb.s,bomb.s);requestAnimationFrame(stepBobm);}
   stepBobm();
-
   bd.addEventListener("click",()=>moveBomb());
   bd.addEventListener("touchstart",(e)=>{e.preventDefault(); moveBomb();});
 }
 
 // ---------- FLOATING SPARKLES ----------
-for(let i=0;i<20;i++){
-  let sp=document.createElement("div");
-  sp.className="sparkle";
-  sp.style.left=Math.random()*100+"%";
-  sp.style.top=Math.random()*100+"%";
-  document.body.appendChild(sp);
-}
+for(let i=0;i<20;i++){let sp=document.createElement("div");sp.className="sparkle";sp.style.left=Math.random()*100+"%";sp.style.top=Math.random()*100+"%";document.body.appendChild(sp);}
 </script>
 </body>
 </html>
