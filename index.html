@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Browser Mocap to Roblox</title>
+<title>Optimized Pose Mocap to Roblox</title>
 
 <style>
 body {
@@ -38,7 +38,7 @@ textarea {
 <body>
 
 <video id="video" autoplay playsinline></video>
-<canvas id="canvas"></canvas>
+<canvas id="canvas" width="640" height="360"></canvas>
 
 <div id="ui">
   <button id="record">Record 10s Mocap</button>
@@ -62,10 +62,19 @@ let landmarker;
 let drawer;
 let recording = false;
 let frames = [];
-let startTime = 0;
+
+let lastDetect = 0;
+const DETECT_INTERVAL = 33;
 
 async function init() {
-  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: {
+      width: { ideal: 640 },
+      height: { ideal: 360 },
+      frameRate: { ideal: 30, max: 30 }
+    }
+  });
+
   video.srcObject = stream;
   await video.play();
 
@@ -86,30 +95,54 @@ async function init() {
   requestAnimationFrame(loop);
 }
 
-function loop() {
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+function drawBox(indices, lm, color) {
+  const xs = indices.map(i => lm[i].x * canvas.width);
+  const ys = indices.map(i => lm[i].y * canvas.height);
 
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(
+    Math.min(...xs),
+    Math.min(...ys),
+    Math.max(...xs) - Math.min(...xs),
+    Math.max(...ys) - Math.min(...ys)
+  );
+}
+
+function loop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(video, 0, 0);
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   const now = performance.now();
-  const result = landmarker.detectForVideo(video, now);
+  let result = null;
 
-  if (result.poseLandmarks?.[0]) {
-    // DEBUG SKELETON
-    drawer.drawConnectors(
-      result.poseLandmarks[0],
-      PoseLandmarker.POSE_CONNECTIONS,
-      { color: "#00ff00", lineWidth: 3 }
-    );
-    drawer.drawLandmarks(
-      result.poseLandmarks[0],
-      { color: "#ff0000", lineWidth: 2 }
-    );
+  if (now - lastDetect >= DETECT_INTERVAL) {
+    result = landmarker.detectForVideo(video, now);
+    lastDetect = now;
   }
 
-  if (recording && result.worldLandmarks?.[0]) {
+  if (result?.poseLandmarks?.[0]) {
+    const lm = result.poseLandmarks[0];
+
+    drawer.drawConnectors(
+      lm,
+      PoseLandmarker.POSE_CONNECTIONS,
+      { color: "#00ff00", lineWidth: 2 }
+    );
+
+    drawer.drawLandmarks(
+      lm,
+      { color: "#ff3333", lineWidth: 1 }
+    );
+
+    drawBox([11,12,23,24], lm, "#00ffff");
+    drawBox([11,13,15], lm, "#ff00ff");
+    drawBox([12,14,16], lm, "#ff00ff");
+    drawBox([23,25,27], lm, "#ffff00");
+    drawBox([24,26,28], lm, "#ffff00");
+  }
+
+  if (recording && result?.worldLandmarks?.[0]) {
     frames.push(result.worldLandmarks[0]);
   }
 
@@ -129,8 +162,6 @@ function toCFrame(v) {
 recordBtn.onclick = async () => {
   frames = [];
   recording = true;
-  startTime = performance.now();
-
   recordBtn.disabled = true;
   recordBtn.textContent = "Recording...";
 
@@ -145,6 +176,7 @@ recordBtn.onclick = async () => {
 
 function exportLua() {
   let lua = "";
+  const dt = (1 / 30).toFixed(3);
 
   frames.forEach((p, i) => {
     lua += `local function kf${i+1}()\n`;
@@ -164,9 +196,12 @@ function exportLua() {
       lua += `  ${j}.Transform = ${toCFrame(joints[j])}\n`;
     }
 
-    lua += `end\n`;
+    lua += `end\n\n`;
+  });
+
+  frames.forEach((_, i) => {
     lua += `kf${i+1}()\n`;
-    lua += `task.wait(0.033)\n\n`;
+    lua += `task.wait(${dt})\n`;
   });
 
   output.value = lua;
