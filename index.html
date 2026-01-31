@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Pose to Roblox Keyframes</title>
+<title>Pose Landmarker to Roblox</title>
 
 <style>
 body {
@@ -41,70 +41,83 @@ textarea {
 <canvas id="canvas"></canvas>
 
 <div id="ui">
-  <button onclick="captureKeyframe()">Capture Keyframe</button>
+  <button id="capture">Capture Keyframe</button>
   <textarea id="output"></textarea>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script type="module">
+import {
+  FilesetResolver,
+  PoseLandmarker
+} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8";
 
-<script>
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const output = document.getElementById("output");
+const captureBtn = document.getElementById("capture");
 
-let lastPose = null;
+let landmarker;
+let lastWorldLandmarks = null;
 let frame = 0;
 let luaText = "";
 
-const pose = new Pose({
-  locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`
-});
+async function init() {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  video.srcObject = stream;
+  await video.play();
 
-pose.setOptions({
-  modelComplexity: 2,
-  smoothLandmarks: true,
-  minDetectionConfidence: 0.5,
-  minTrackingConfidence: 0.5
-});
+  const resolver = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/wasm"
+  );
 
-pose.onResults(r => {
+  landmarker = await PoseLandmarker.createFromOptions(resolver, {
+    baseOptions: {
+      modelAssetPath:
+        "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task"
+    },
+    runningMode: "VIDEO",
+    numPoses: 1
+  });
+
+  requestAnimationFrame(loop);
+}
+
+function loop() {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(r.image, 0, 0);
-  if (r.poseLandmarks) {
-    drawConnectors(ctx, r.poseLandmarks, POSE_CONNECTIONS);
-    drawLandmarks(ctx, r.poseLandmarks);
-    lastPose = r.poseLandmarks;
-  }
-});
+  ctx.drawImage(video, 0, 0);
 
-new Camera(video, {
-  onFrame: async () => {
-    await pose.send({ image: video });
-  },
-  width: 1280,
-  height: 720
-}).start();
+  const now = performance.now();
+  const result = landmarker.detectForVideo(video, now);
+
+  if (result.worldLandmarks && result.worldLandmarks[0]) {
+    lastWorldLandmarks = result.worldLandmarks[0];
+  }
+
+  requestAnimationFrame(loop);
+}
 
 function vec(a, b) {
-  return { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
+  return {
+    x: b.x - a.x,
+    y: b.y - a.y,
+    z: b.z - a.z
+  };
 }
 
 function toCFrame(v) {
   const yaw = Math.atan2(v.x, v.z);
-  const pitch = -Math.atan2(v.y, Math.sqrt(v.x*v.x + v.z*v.z));
+  const pitch = -Math.atan2(v.y, Math.sqrt(v.x * v.x + v.z * v.z));
   return `CFrame.Angles(${pitch.toFixed(3)}, ${yaw.toFixed(3)}, 0)`;
 }
 
-function captureKeyframe() {
-  if (!lastPose) return;
+captureBtn.onclick = () => {
+  if (!lastWorldLandmarks) return;
 
   frame++;
-  const p = lastPose;
+
+  const p = lastWorldLandmarks;
 
   const joints = {
     LeftShoulder: vec(p[11], p[13]),
@@ -126,7 +139,9 @@ function captureKeyframe() {
   luaText += `task.wait(0.033)\n\n`;
 
   output.value = luaText;
-}
+};
+
+init();
 </script>
 
 </body>
