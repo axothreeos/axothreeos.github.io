@@ -1,367 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Axo's Portfolio</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>axo.lol</title>
+  <style>
+    /* Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-<style>
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;font-family:Tahoma,Verdana,sans-serif;overflow:hidden;background:black}
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #050505;
+      color: #eaeaea;
+      font-family: monospace;
+      overflow: hidden;
+    }
 
-/* CRT */
-body::before{
-  content:"";
-  position:fixed;
-  inset:0;
-  background:repeating-linear-gradient(
-    to bottom,
-    rgba(0,0,0,.15),
-    rgba(0,0,0,.15) 1px,
-    transparent 1px,
-    transparent 2px
-  );
-  pointer-events:none;
-  z-index:9999;
-}
+    /* Background noise */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
 
-/* Boot */
-#boot{
-  position:absolute;
-  inset:0;
-  background:black;
-  color:#f7e34b;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  z-index:1000;
-}
-#bar{width:240px;height:12px;border:2px solid white}
-#fill{height:100%;width:0;background:#f7e34b}
+    /* Center container */
+    .container {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-/* Desktop */
-#desktop{
-  display:none;
-  width:100%;
-  height:100%;
-  background:url("https://upload.wikimedia.org/wikipedia/en/2/27/Bliss_%28Windows_XP%29.png") center/cover no-repeat;
-  position:relative;
-}
+    h1 {
+      font-size: clamp(3rem, 10vw, 7rem);
+      letter-spacing: 6px;
+      text-shadow: 0 0 10px #5affff, 0 0 30px #5affff;
+      animation: glitch 2.5s infinite;
+    }
 
-/* Taskbar */
-#taskbar{
-  position:absolute;
-  bottom:0;
-  left:0;
-  right:0;
-  height:32px;
-  background:#c0c0c0;
-  display:flex;
-  align-items:center;
-}
-#start{
-  background:#0a64ad;
-  color:white;
-  border:1px solid black;
-  margin:2px;
-  padding:4px 10px;
-  cursor:pointer;
-}
-#tasks button{
-  margin:2px;
-  padding:3px 6px;
-  cursor:pointer;
-}
+    .tagline {
+      opacity: 0.7;
+      font-size: 0.9rem;
+      letter-spacing: 2px;
+    }
 
-/* Start menu */
-#menu{
-  position:absolute;
-  bottom:32px;
-  left:0;
-  background:#c0c0c0;
-  border:2px solid black;
-  display:none;
-}
-#menu div{
-  padding:6px 10px;
-  cursor:pointer;
-}
-#menu div:hover{
-  background:#0a64ad;
-  color:white;
-}
+    .links {
+      display: flex;
+      gap: 20px;
+      margin-top: 30px;
+    }
 
-/* Windows */
-.window{
-  position:absolute;
-  width:320px;
-  background:#c0c0c0;
-  border:2px solid black;
-  display:none;
-}
-.title{
-  background:#0a64ad;
-  color:white;
-  padding:4px;
-  cursor:move;
-  display:flex;
-  justify-content:space-between;
-}
-.controls span{
-  background:#f7e34b;
-  color:black;
-  border:1px solid black;
-  padding:0 6px;
-  cursor:pointer;
-  margin-left:4px;
-}
-.content{
-  background:#fff6c0;
-  padding:8px;
-  font-size:13px;
-}
+    .links a {
+      text-decoration: none;
+      color: #5affff;
+      border: 1px solid #5affff55;
+      padding: 10px 16px;
+      font-size: 0.8rem;
+      transition: 0.2s ease;
+    }
 
-/* Canvas */
-canvas{
-  background:#001a44;
-  display:block;
-  margin:6px auto;
-  border:2px solid black;
-}
+    .links a:hover {
+      background: #5affff;
+      color: #050505;
+      box-shadow: 0 0 20px #5affff;
+    }
 
-/* Mobile buttons */
-.controls-grid{
-  display:grid;
-  grid-template-columns:repeat(3,48px);
-  gap:4px;
-  justify-content:center;
-}
-.ctrl{
-  background:#003cff;
-  color:white;
-  text-align:center;
-  padding:10px;
-  user-select:none;
-}
-@media(min-width:700px){
-  .controls-grid{display:none}
-}
-</style>
+    /* Cursor glow */
+    .cursor {
+      position: fixed;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #5affff;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      filter: blur(10px);
+      transform: translate(-50%, -50%);
+      opacity: 0.6;
+    }
+
+    @keyframes glitch {
+      0% { transform: translate(0); }
+      20% { transform: translate(-2px, 1px); }
+      40% { transform: translate(2px, -1px); }
+      60% { transform: translate(-1px, 2px); }
+      80% { transform: translate(1px, -2px); }
+      100% { transform: translate(0); }
+    }
+  </style>
 </head>
-
 <body>
 
-<div id="boot">
-  Booting AxOS<br><br>
-  Loading portfolio modules
-  <div id="bar"><div id="fill"></div></div>
-</div>
+  <div class="cursor" id="cursor"></div>
 
-<div id="desktop">
+  <div class="container">
+    <h1>AXO</h1>
+    <div class="tagline">retro code • custom engines • chaos</div>
 
-<div id="menu">
-  <div onclick="openWin('about')">About</div>
-  <div onclick="openWin('pixl')">Pixl2D</div>
-  <div onclick="openWin('rendr')">Rendr3D</div>
-</div>
-
-<div id="taskbar">
-  <div id="start">Start</div>
-  <div id="tasks"></div>
-</div>
-
-<!-- ABOUT -->
-<div class="window" id="about" style="top:40px;left:40px">
-  <div class="title">About
-    <div class="controls">
-      <span onclick="minWin('about')">_</span>
-      <span onclick="closeWin('about')">X</span>
+    <div class="links">
+      <a href="#">portfolio</a>
+      <a href="#">projects</a>
+      <a href="#">contact</a>
     </div>
   </div>
-  <div class="content">
-    Developer focused on custom engines, rendering, and experimental game systems.
-    This portfolio simulates a retro OS to showcase projects interactively.
-  </div>
-</div>
 
-<!-- PIXL2D -->
-<div class="window" id="pixl" style="top:80px;left:120px">
-  <div class="title">Pixl2D
-    <div class="controls">
-      <span onclick="minWin('pixl')">_</span>
-      <span onclick="closeWin('pixl')">X</span>
-    </div>
-  </div>
-  <div class="content">
-    <canvas id="pixlCanvas" width="240" height="160"></canvas>
-    <div class="controls-grid">
-      <div class="ctrl" data-p="up">↑</div>
-      <div class="ctrl" data-p="down">↓</div>
-      <div class="ctrl" data-p="left">←</div>
-      <div class="ctrl" data-p="right">→</div>
-    </div>
-  </div>
-</div>
+  <script>
+    const cursor = document.getElementById('cursor');
 
-<!-- RENDR3D -->
-<div class="window" id="rendr" style="top:60px;left:200px">
-  <div class="title">Rendr3D
-    <div class="controls">
-      <span onclick="minWin('rendr')">_</span>
-      <span onclick="closeWin('rendr')">X</span>
-    </div>
-  </div>
-  <div class="content">
-    Reach the yellow cube to unlock Bobm Tag.
-    <canvas id="r3d" width="240" height="160"></canvas>
-    <div class="controls-grid">
-      <div class="ctrl" data-r="f">↑</div>
-      <div class="ctrl" data-r="b">↓</div>
-      <div class="ctrl" data-r="l">←</div>
-      <div class="ctrl" data-r="r">→</div>
-    </div>
-  </div>
-</div>
+    window.addEventListener('mousemove', e => {
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top = e.clientY + 'px';
+    });
 
-<!-- BOBM TAG -->
-<div class="window" id="bobm" style="top:100px;left:260px">
-  <div class="title">Bobm Tag
-    <div class="controls">
-      <span onclick="minWin('bobm')">_</span>
-      <span onclick="closeWin('bobm')">X</span>
-    </div>
-  </div>
-  <div class="content">
-    My first project. Designed with limited engine knowledge.
-    Focused on timing, pressure, and player movement.
-  </div>
-</div>
+    // subtle flicker
+    setInterval(() => {
+      cursor.style.opacity = Math.random() * 0.5 + 0.3;
+    }, 120);
+  </script>
 
-</div>
-
-<script>
-/* BOOT */
-let p=0;
-let fill=document.getElementById("fill");
-let boot=setInterval(()=>{
-  p+=2;
-  fill.style.width=p+"%";
-  if(p>=100){
-    clearInterval(boot);
-    document.getElementById("boot").style.display="none";
-    document.getElementById("desktop").style.display="block";
-  }
-},40);
-
-/* START MENU */
-start.onclick=()=>menu.style.display=menu.style.display?"":"block";
-document.body.onclick=e=>{
-  if(e.target.id!=="start") menu.style.display="";
-};
-
-/* WINDOW SYSTEM */
-function openWin(id){
-  let w=document.getElementById(id);
-  w.style.display="block";
-  if(!document.getElementById("t_"+id)){
-    let b=document.createElement("button");
-    b.id="t_"+id;
-    b.textContent=id;
-    b.onclick=()=>w.style.display="block";
-    tasks.appendChild(b);
-  }
-}
-function closeWin(id){
-  document.getElementById(id).style.display="none";
-  let t=document.getElementById("t_"+id);
-  if(t)t.remove();
-}
-function minWin(id){
-  document.getElementById(id).style.display="none";
-}
-
-/* DRAG */
-document.querySelectorAll(".window").forEach(w=>{
-  let t=w.querySelector(".title");
-  let ox,oy;
-  t.onmousedown=e=>{
-    ox=e.clientX-w.offsetLeft;
-    oy=e.clientY-w.offsetTop;
-    document.onmousemove=m=>{
-      w.style.left=m.clientX-ox+"px";
-      w.style.top=m.clientY-oy+"px";
-    };
-    document.onmouseup=()=>document.onmousemove=null;
-  };
-});
-
-/* PIXL2D */
-const pc=pixlCanvas.getContext("2d");
-let pl={x:20,y:20,s:10,v:2};
-let blocks=[{x:60,y:40,w:120,h:12},{x:100,y:90,w:12,h:50}];
-let keys={};
-onkeydown=e=>keys[e.key]=1;
-onkeyup=e=>keys[e.key]=0;
-
-function collide(a,b){
-  return a.x<b.x+b.w&&a.x+a.s>b.x&&a.y<b.y+b.h&&a.y+a.s>b.y;
-}
-function pixl(){
-  let nx=pl.x+(keys.ArrowRight-keys.ArrowLeft)*pl.v;
-  let ny=pl.y+(keys.ArrowDown-keys.ArrowUp)*pl.v;
-  let t={...pl,x:nx,y:ny};
-  if(!blocks.some(b=>collide(t,b))){pl.x=nx;pl.y=ny;}
-  pc.clearRect(0,0,240,160);
-  pc.fillStyle="#f7e34b";pc.fillRect(pl.x,pl.y,pl.s,pl.s);
-  pc.fillStyle="#003cff";blocks.forEach(b=>pc.fillRect(b.x,b.y,b.w,b.h));
-  requestAnimationFrame(pixl);
-}
-pixl();
-
-/* RENDR3D TRUE 3D */
-const rc=r3d.getContext("2d");
-let cam={x:1.5,z:1.5,a:0};
-let goal={x:4,z:4};
-let cubes=[{x:0,z:0},{x:1,z:0},{x:2,z:0},{x:3,z:0}];
-
-function proj(x,z){
-  let dx=x-cam.x;
-  let dz=z-cam.z;
-  let rx=dx*Math.cos(cam.a)-dz*Math.sin(cam.a);
-  let rz=dx*Math.sin(cam.a)+dz*Math.cos(cam.a);
-  let s=120/(rz+3);
-  return {x:120+rx*s,y:80-s*10,s};
-}
-
-function drawCube(x,z,c){
-  let p=proj(x,z);
-  if(p.s>0){
-    rc.fillStyle=c;
-    rc.fillRect(p.x-p.s/2,p.y-p.s/2,p.s,p.s);
-  }
-}
-
-let rkeys={};
-onkeydown=e=>rkeys[e.key]=1;
-onkeyup=e=>rkeys[e.key]=0;
-
-function rendr(){
-  if(rkeys.w)cam.x+=Math.sin(cam.a)*0.05,cam.z+=Math.cos(cam.a)*0.05;
-  if(rkeys.s)cam.x-=Math.sin(cam.a)*0.05,cam.z-=Math.cos(cam.a)*0.05;
-  if(rkeys.a)cam.a-=0.04;
-  if(rkeys.d)cam.a+=0.04;
-
-  rc.clearRect(0,0,240,160);
-  cubes.forEach(c=>drawCube(c.x,c.z,"#003cff"));
-  drawCube(goal.x,goal.z,"#f7e34b");
-
-  if(Math.hypot(cam.x-goal.x,cam.z-goal.z)<0.5){
-    openWin("bobm");
-  }
-  requestAnimationFrame(rendr);
-}
-rendr();
-</script>
 </body>
 </html>
