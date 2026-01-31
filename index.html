@@ -2,155 +2,257 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Professional Pose Mocap + Smooth Roblox Export</title>
+<title>My Portfolio.exe</title>
+
 <style>
-body { margin:0; background:#121212; font-family:'Fira Code', monospace; color:#e0e0e0; overflow:hidden; }
-canvas { position:absolute; top:0; left:0; }
-#video { display:none; }
-#ui {
-  position: fixed; right:20px; top:20px; width:380px; background:#1f1f1f; border-radius:12px;
-  box-shadow:0 4px 20px rgba(0,0,0,0.6); padding:16px; z-index:100;
-}
-#ui h2 { margin:0 0 12px 0; font-size:18px; color:#00ff88; }
-button { width:100%; padding:10px 0; margin-bottom:12px; background:#00ff88; color:#121212; font-weight:bold; font-size:14px; border:none; border-radius:8px; cursor:pointer; transition:0.2s; }
-button:hover { background:#00cc66; }
-button:disabled { background:#555; cursor:not-allowed; }
-#status { font-size:14px; margin-bottom:12px; color:#cccccc; }
-textarea { width:100%; height:280px; background:#0b0b0b; color:#00ff88; border:none; border-radius:8px; padding:8px; font-family:'Fira Code', monospace; font-size:13px; line-height:1.4em; overflow-y:auto; }
-label { display:flex; align-items:center; font-size:14px; margin-bottom:8px; cursor:pointer; }
-input[type="checkbox"] { margin-right:6px; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #000;
+    font-family: Tahoma, Verdana, sans-serif;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* CRT EFFECT */
+  .crt {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #f7e34b;
+    overflow: hidden;
+  }
+
+  .crt::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.15),
+      rgba(0,0,0,0.15) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .crt::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+    pointer-events: none;
+    z-index: 11;
+  }
+
+  /* DESKTOP */
+  .desktop {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(#005eff, #003cff);
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  /* WINDOW */
+  .window {
+    width: 520px;
+    background: #c0c0c0;
+    border: 2px solid #000;
+    box-shadow: 4px 4px 0 #000;
+  }
+
+  .title-bar {
+    background: linear-gradient(#0a2a66, #003cff);
+    color: #fff;
+    padding: 4px 6px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+
+  .title-bar span {
+    font-weight: bold;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 4px;
+  }
+
+  .btn {
+    width: 12px;
+    height: 12px;
+    background: #c0c0c0;
+    border: 1px solid #000;
+  }
+
+  .content {
+    background: #fff8c4;
+    padding: 12px;
+    font-size: 13px;
+    color: #0a2a66;
+  }
+
+  h1 {
+    font-size: 18px;
+    margin: 0 0 8px 0;
+  }
+
+  h2 {
+    font-size: 14px;
+    background: #0a2a66;
+    color: #f7e34b;
+    padding: 2px 6px;
+    margin-top: 12px;
+  }
+
+  .project {
+    border: 1px dashed #0a2a66;
+    padding: 6px;
+    margin-top: 6px;
+    background: #fff;
+  }
+
+  canvas {
+    display: block;
+    margin: 10px auto;
+    background: #0a2a66;
+    border: 2px solid #003cff;
+  }
+
+  .status-bar {
+    background: #c0c0c0;
+    border-top: 1px solid #000;
+    padding: 2px 6px;
+    font-size: 11px;
+  }
+
+  .whimsy {
+    font-style: italic;
+    opacity: 0.8;
+  }
 </style>
 </head>
+
 <body>
+<div class="crt">
+  <div class="desktop">
 
-<video id="video" autoplay playsinline></video>
-<canvas id="canvas" width="640" height="360"></canvas>
+    <div class="window">
+      <div class="title-bar">
+        <span>Portfolio.exe</span>
+        <div class="buttons">
+          <div class="btn"></div>
+          <div class="btn"></div>
+          <div class="btn"></div>
+        </div>
+      </div>
 
-<div id="ui">
-  <h2>Pose Mocap Recorder</h2>
-  <button id="record">Record 10s</button>
-  <div id="status">Status: Idle</div>
-  <label><input type="checkbox" id="debugToggle" checked> Show Debug Skeleton</label>
-  <textarea id="output" placeholder="Generated Roblox Lua will appear here..."></textarea>
+      <div class="content">
+        <h1>Hello, I am a Developer</h1>
+        <p>
+          I make games, apps, tools, and questionable experiments.
+          I like building things from scratch and seeing how far I can push the browser.
+        </p>
+
+        <p class="whimsy">
+          This site is intentionally whimsical. The web should feel alive.
+        </p>
+
+        <h2>Projects</h2>
+        <div class="project">
+          <strong>2D Game Experiments</strong><br>
+          Custom engines, collisions, movement, and weird mechanics.
+        </div>
+        <div class="project">
+          <strong>Apps & Tools</strong><br>
+          Useful things I made because I was annoyed something did not exist.
+        </div>
+        <div class="project">
+          <strong>Web Oddities</strong><br>
+          Retro aesthetics, UI experiments, and playful interactions.
+        </div>
+
+        <h2>Mini Game.exe</h2>
+        <canvas id="game" width="320" height="240"></canvas>
+        <div class="whimsy">Arrow keys. Avoid the walls. Impress nobody.</div>
+      </div>
+
+      <div class="status-bar">
+        Status: Running • Memory: Probably leaking
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<script type="module">
-import { FilesetResolver, PoseLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8";
+<script>
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
 
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-const output = document.getElementById("output");
-const recordBtn = document.getElementById("record");
-const statusLabel = document.getElementById("status");
-const debugToggle = document.getElementById("debugToggle");
+  const player = { x: 20, y: 20, s: 14, v: 2 };
+  const walls = [
+    { x: 80, y: 0, w: 20, h: 180 },
+    { x: 160, y: 60, w: 20, h: 180 },
+    { x: 40, y: 120, w: 120, h: 20 }
+  ];
 
-let landmarker;
-let recording=false;
-let frames=[];
-let lastDetect=0;
-const DETECT_INTERVAL=33;
+  const keys = {};
+  window.addEventListener("keydown", e => keys[e.key] = true);
+  window.addEventListener("keyup", e => keys[e.key] = false);
 
-async function init(){
-  const stream=await navigator.mediaDevices.getUserMedia({
-    video:{width:{ideal:640},height:{ideal:360},frameRate:{ideal:30,max:30}}
-  });
-  video.srcObject=stream;
-  await video.play();
+  function hit(a, b) {
+    return a.x < b.x + b.w &&
+           a.x + a.s > b.x &&
+           a.y < b.y + b.h &&
+           a.y + a.s > b.y;
+  }
 
-  const resolver = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/wasm");
-  landmarker = await PoseLandmarker.createFromOptions(resolver,{
-    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task"},
-    runningMode:"VIDEO",
-    numPoses:1
-  });
+  function update() {
+    let nx = player.x;
+    let ny = player.y;
 
-  requestAnimationFrame(loop);
-}
+    if (keys["ArrowUp"]) ny -= player.v;
+    if (keys["ArrowDown"]) ny += player.v;
+    if (keys["ArrowLeft"]) nx -= player.v;
+    if (keys["ArrowRight"]) nx += player.v;
 
-// helpers
-function px(lm){ return {x:lm.x*canvas.width,y:lm.y*canvas.height}; }
-function drawLine(a,b,color="#0f0"){ const p1=px(a),p2=px(b); ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();}
-function drawBox(indices,lm,color="#00ffff"){ const xs=indices.map(i=>px(lm[i]).x),ys=indices.map(i=>px(lm[i]).y); ctx.strokeStyle=color; ctx.lineWidth=2; ctx.strokeRect(Math.min(...xs),Math.min(...ys),Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys));}
-function mirrorX(v){return {x:-v.x, y:v.y, z:v.z};} // mirror X-axis
+    const test = { ...player, x: nx, y: ny };
+    for (const w of walls) {
+      if (hit(test, w)) return;
+    }
 
-function loop(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    player.x = nx;
+    player.y = ny;
+  }
 
-  const now=performance.now();
-  let result=null;
-  if(now-lastDetect>=DETECT_INTERVAL){ result=landmarker.detectForVideo(video,now); lastDetect=now;}
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  if(result?.poseLandmarks?.[0]){
-    const lm=result.poseLandmarks[0];
-    if(debugToggle.checked){
-      const connections=[[11,13],[13,15],[12,14],[14,16],[23,25],[25,27],[24,26],[26,28],[11,12],[11,23],[12,24],[23,24]];
-      connections.forEach(c=>drawLine(lm[c[0]],lm[c[1]],"#0f0"));
-      drawBox([11,12,23,24],lm,"#00ffff");
-      drawBox([11,13,15],lm,"#ff00ff");
-      drawBox([12,14,16],lm,"#ff00ff");
-      drawBox([23,25,27],lm,"#ffff00");
-      drawBox([24,26,28],lm,"#ffff00");
+    ctx.fillStyle = "#f7e34b";
+    ctx.fillRect(player.x, player.y, player.s, player.s);
+
+    ctx.fillStyle = "#003cff";
+    for (const w of walls) {
+      ctx.fillRect(w.x, w.y, w.w, w.h);
     }
   }
 
-  if(recording && result?.worldLandmarks?.[0]) frames.push(result.worldLandmarks[0]);
-  requestAnimationFrame(loop);
-}
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
 
-function vec(a,b){ return {x:b.x-a.x,y:b.y-a.y,z:b.z-a.z}; }
-function midpoint(a,b){ return {x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:(a.z+b.z)/2}; }
-function toEuler(v){ const yaw=Math.atan2(v.x,v.z)*180/Math.PI; const pitch=-Math.atan2(v.y,Math.sqrt(v.x*v.x+v.z*v.z))*180/Math.PI; return `Vector3.new(${pitch.toFixed(1)},${yaw.toFixed(1)},0)`; }
-function toPosition(v){ return `Vector3.new(${v.x.toFixed(3)},${v.y.toFixed(3)},${v.z.toFixed(3)})`; }
-
-recordBtn.onclick=async()=>{
-  frames=[]; recording=true; recordBtn.disabled=true; statusLabel.textContent="Status: Recording...";
-  await new Promise(r=>setTimeout(r,10000));
-  recording=false; recordBtn.disabled=false; statusLabel.textContent="Status: Idle";
-  exportLua();
-};
-
-function exportLua(){
-  let lua=""; const dt=(1/30).toFixed(3);
-  frames.forEach((p,i)=>{
-    lua+=`local function kf${i+1}()\n`;
-
-    // mirror X
-    for(let j=0;j<p.length;j++) p[j]=mirrorX(p[j]);
-
-    // torso = midpoint of shoulders & hips
-    const torsoPos=midpoint(p[11],p[12]);
-    // limbs
-    const limbs={
-      LeftUpperArm:{start: p[11], end:p[13]},
-      LeftLowerArm:{start:p[13], end:p[15]},
-      RightUpperArm:{start:p[12], end:p[14]},
-      RightLowerArm:{start:p[14], end:p[16]},
-      LeftUpperLeg:{start:p[23], end:p[25]},
-      LeftLowerLeg:{start:p[25], end:p[27]},
-      RightUpperLeg:{start:p[24], end:p[26]},
-      RightLowerLeg:{start:p[26], end:p[28]},
-    };
-
-    for(const limb in limbs){
-      const mid=midpoint(limbs[limb].start,limbs[limb].end);
-      const rel={x:mid.x-torsoPos.x,y:mid.y-torsoPos.y,z:mid.z-torsoPos.z};
-      lua+=`  ${limb}.Position = ${toPosition(rel)}\n`;
-      lua+=`  ${limb}.Orientation = ${toEuler(vec(limbs[limb].start,limbs[limb].end))}\n`;
-    }
-
-    lua+="end\n\n";
-  });
-
-  frames.forEach((_,i)=>{
-    lua+=`kf${i+1}()\ntask.wait(${dt})\n`;
-  });
-
-  output.value=lua;
-}
-
-init();
+  loop();
 </script>
 </body>
 </html>
