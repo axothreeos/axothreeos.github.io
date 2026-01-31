@@ -2,142 +2,132 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Object Detection - MediaPipe + Three.js</title>
-<style>
-  body { margin: 0; overflow: hidden; background: #111; color: #fff; font-family: Arial, sans-serif; }
-  #log { position: absolute; top: 0; left: 0; z-index: 2; color: #0f0; padding: 8px; font-size: 14px; }
-  video { display: none; }
-  canvas { display: block; }
-</style>
+<title>Pose to Roblox Keyframes</title>
 
-<!-- MediaPipe Tasks Vision -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js"></script>
-<!-- Three.js -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/controls/OrbitControls.js"></script>
+<style>
+body {
+  background: #0b0b0b;
+  color: #e0e0e0;
+  font-family: monospace;
+}
+video, canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+#ui {
+  position: fixed;
+  right: 10px;
+  top: 10px;
+  width: 420px;
+}
+button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+textarea {
+  width: 100%;
+  height: 420px;
+  background: #000;
+  color: #00ff88;
+}
+</style>
 </head>
+
 <body>
 
-<div id="log">Initializing...</div>
-<video id="video" autoplay muted playsinline></video>
-<canvas id="three-canvas"></canvas>
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas"></canvas>
+
+<div id="ui">
+  <button onclick="captureKeyframe()">Capture Keyframe</button>
+  <textarea id="output"></textarea>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <script>
-(async () => {
-  const log = document.getElementById("log");
-  const video = document.getElementById("video");
-  const canvas3D = document.getElementById("three-canvas");
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const output = document.getElementById("output");
 
-  // 1️⃣ Back Camera Setup
-  async function setupBackCamera() {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const backCam = devices.find(d => d.kind === "videoinput" && /back|rear/i.test(d.label));
-    const constraints = backCam
-      ? { video: { deviceId: { exact: backCam.deviceId }, width: 640, height: 480 } }
-      : { video: { facingMode: "environment", width: 640, height: 480 } };
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    video.srcObject = stream;
-    return new Promise(r => video.onloadedmetadata = r);
+let lastPose = null;
+let frame = 0;
+let luaText = "";
+
+const pose = new Pose({
+  locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`
+});
+
+pose.setOptions({
+  modelComplexity: 2,
+  smoothLandmarks: true,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5
+});
+
+pose.onResults(r => {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(r.image, 0, 0);
+  if (r.poseLandmarks) {
+    drawConnectors(ctx, r.poseLandmarks, POSE_CONNECTIONS);
+    drawLandmarks(ctx, r.poseLandmarks);
+    lastPose = r.poseLandmarks;
   }
-  await setupBackCamera();
+});
 
-  // 2️⃣ MediaPipe Object Detector
-  const { ObjectDetector, FilesetResolver } = window.tasksVision;
-  const vision = await FilesetResolver.forVisionTasks(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-  );
+new Camera(video, {
+  onFrame: async () => {
+    await pose.send({ image: video });
+  },
+  width: 1280,
+  height: 720
+}).start();
 
-  const objectDetector = await ObjectDetector.createFromOptions(vision, {
-    baseOptions: {
-      // Replace with your EfficientDet-Lite2 model path
-      modelAssetPath: "models/efficientdet_lite2_float32.tflite"
-    },
-    scoreThreshold: 0.5,
-    runningMode: "video"
-  });
-  log.innerText = "Object Detector Loaded!";
+function vec(a, b) {
+  return { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
+}
 
-  // 3️⃣ Three.js Scene Setup
-  const scene = new THREE.Scene();
-  const camera3D = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera3D.position.set(0, 0, 10);
-  const renderer = new THREE.WebGLRenderer({ canvas: canvas3D, alpha: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
+function toCFrame(v) {
+  const yaw = Math.atan2(v.x, v.z);
+  const pitch = -Math.atan2(v.y, Math.sqrt(v.x*v.x + v.z*v.z));
+  return `CFrame.Angles(${pitch.toFixed(3)}, ${yaw.toFixed(3)}, 0)`;
+}
 
-  const controls = new THREE.OrbitControls(camera3D, renderer.domElement);
+function captureKeyframe() {
+  if (!lastPose) return;
 
-  const boxesGroup = new THREE.Group();
-  scene.add(boxesGroup);
+  frame++;
+  const p = lastPose;
 
-  // 4️⃣ Render Loop
-  function render() {
-    requestAnimationFrame(render);
-    controls.update();
-    renderer.render(scene, camera3D);
+  const joints = {
+    LeftShoulder: vec(p[11], p[13]),
+    LeftElbow: vec(p[13], p[15]),
+    RightShoulder: vec(p[12], p[14]),
+    RightElbow: vec(p[14], p[16]),
+    LeftHip: vec(p[23], p[25]),
+    LeftKnee: vec(p[25], p[27]),
+    RightHip: vec(p[24], p[26]),
+    RightKnee: vec(p[26], p[28])
+  };
+
+  luaText += `local function kf${frame}()\n`;
+  for (const j in joints) {
+    luaText += `  ${j}.Transform = ${toCFrame(joints[j])}\n`;
   }
-  render();
+  luaText += `end\n`;
+  luaText += `kf${frame}()\n`;
+  luaText += `task.wait(0.033)\n\n`;
 
-  // 5️⃣ Draw Detected Objects in 3D
-  function draw3DObjects(detections) {
-    boxesGroup.clear();
-    detections.forEach(d => {
-      const box = d.boundingBox;
-      const label = d.categories[0].categoryName;
-      const score = (d.categories[0].score * 100).toFixed(1);
-
-      // Compute center & size (normalize coordinates from 0..1 to -5..5)
-      const x = (box.xMin + (box.xMax - box.xMin)/2 - 0.5) * 10;
-      const y = -(box.yMin + (box.yMax - box.yMin)/2 - 0.5) * 10;
-      const w = (box.xMax - box.xMin) * 10;
-      const h = (box.yMax - box.yMin) * 10;
-
-      // Cube geometry for object
-      const geometry = new THREE.BoxGeometry(w, h, 0.5);
-      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-      const cube = new THREE.Mesh(geometry, material);
-      cube.position.set(x, y, -1);
-      boxesGroup.add(cube);
-
-      // Floating label
-      const spriteMat = new THREE.SpriteMaterial({
-        map: createTextTexture(`${label} ${score}%`),
-        transparent: true
-      });
-      const sprite = new THREE.Sprite(spriteMat);
-      sprite.scale.set(2, 1, 1);
-      sprite.position.set(x, y + h/2, -1);
-      boxesGroup.add(sprite);
-    });
-  }
-
-  // Helper: create a THREE.js texture from text
-  function createTextTexture(text) {
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 64;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "white";
-    ctx.font = "28px Arial";
-    ctx.fillText(text, 5, 40);
-    const texture = new THREE.CanvasTexture(canvas);
-    return texture;
-  }
-
-  // 6️⃣ Detection Loop
-  let lastTime = -1;
-  function detectLoop() {
-    if (video.currentTime !== lastTime) {
-      const results = objectDetector.detectForVideo(video, performance.now());
-      draw3DObjects(results.detections);
-      log.innerText = `Objects detected: ${results.detections.length}`;
-      lastTime = video.currentTime;
-    }
-    requestAnimationFrame(detectLoop);
-  }
-  detectLoop();
-
-})();
+  output.value = luaText;
+}
 </script>
+
 </body>
 </html>
