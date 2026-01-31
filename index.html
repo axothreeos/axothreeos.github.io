@@ -5,27 +5,45 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Axo's Portfolio</title>
 <style>
-*{box-sizing:border-box;}
-html,body{margin:0;padding:0;height:100%;font-family:Tahoma,Verdana,sans-serif;background:#000;}
-a{color:#003cff;font-weight:bold;}
+/* ---------- GENERAL RESET ---------- */
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;font-family:Tahoma,Verdana,sans-serif;background:#000;overflow:hidden;}
+a{color:#003cff;font-weight:bold;text-decoration:none;}
+
+/* ---------- CRT OVERLAY ---------- */
 .crt{position:relative;width:100%;height:100%;overflow:hidden;}
 .crt::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to bottom,rgba(0,0,0,0.15),rgba(0,0,0,0.15) 1px,transparent 1px,transparent 2px);pointer-events:none;z-index:10;}
 .crt::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,transparent 60%,rgba(0,0,0,0.45));pointer-events:none;z-index:11;}
+
+/* ---------- BOOT SCREEN ---------- */
 #boot{position:absolute;inset:0;background:#000;color:#f7e34b;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;text-align:center;z-index:20;}
-#desktop{display:none;width:100%;height:100%;background:linear-gradient(#005eff,#003cff);padding:12px;}
+#boot .progress{width:200px;height:10px;background:#003cff;margin-top:10px;border:2px solid #fff;position:relative;}
+#boot .progress span{display:block;height:100%;background:#f7e34b;width:0%;}
+
+/* ---------- DESKTOP ---------- */
+#desktop{display:none;width:100%;height:100%;background:linear-gradient(#005eff,#003cff);padding:12px;position:relative;overflow:hidden;}
 .icons{display:grid;grid-template-columns:repeat(auto-fill,72px);gap:14px;max-width:360px;}
-.icon{text-align:center;font-size:11px;color:#fff;cursor:pointer;}
+.icon{text-align:center;font-size:11px;color:#fff;cursor:pointer;user-select:none;transition:transform 0.15s;}
+.icon:hover{transform:translateY(-4px);}
 .icon div{width:48px;height:48px;margin:0 auto 4px;background:#f7e34b;border:2px solid #000;}
+
+/* ---------- TASKBAR ---------- */
+#taskbar{position:absolute;bottom:0;left:0;width:100%;height:32px;background:#c0c0c0;border-top:2px solid #000;display:flex;align-items:center;padding:0 4px;font-size:12px;}
+#taskbar button{margin-right:2px;background:#f7e34b;border:1px solid #000;padding:2px 6px;cursor:pointer;}
+
+/* ---------- WINDOWS ---------- */
 .window{position:absolute;top:60px;left:20px;width:min(92vw,520px);background:#c0c0c0;border:2px solid #000;box-shadow:4px 4px 0 #000;display:none;z-index:5;}
-.title-bar{background:linear-gradient(#0a2a66,#003cff);color:#fff;padding:4px 6px;font-size:12px;}
+.title-bar{background:linear-gradient(#0a2a66,#003cff);color:#fff;padding:4px 6px;font-size:12px;cursor:grab;}
 .content{background:#fff8c4;padding:10px;font-size:13px;color:#0a2a66;}
-.content h2{font-size:14px;background:#0a2a66;color:#f7e34b;padding:2px 6px;}
 .project{background:#fff;border:1px dashed #0a2a66;padding:6px;margin-top:6px;}
 canvas{display:block;margin:8px auto;background:#0a2a66;border:2px solid #003cff;touch-action:none;}
 .touch-controls{display:grid;grid-template-columns:repeat(3,44px);gap:4px;justify-content:center;margin-top:6px;}
 .touch-btn{background:#003cff;color:#fff;text-align:center;padding:8px;font-size:12px;border:1px solid #000;}
 @media(min-width:700px){.touch-controls{display:none;}}
-.hidden-clue{opacity:0.12;font-size:10px;user-select:none;}
+
+/* ---------- FLOATING SPARKLES ---------- */
+.sparkle{position:absolute;width:6px;height:6px;background:#fff;border-radius:50%;opacity:0.6;pointer-events:none;animation:twinkle 2s infinite;}
+@keyframes twinkle{0%,100%{opacity:0.6;}50%{opacity:1;}}
 </style>
 </head>
 <body>
@@ -36,8 +54,9 @@ canvas{display:block;margin:8px auto;background:#0a2a66;border:2px solid #003cff
 Booting AxOS<br>
 Initializing graphics subsystem<br>
 Mounting project archive<br>
-Loading legacy module: BobmTag.sys<br>
-Initializing portfolio environment
+Loading core modules...<br>
+Welcome to Axo's Portfolio
+<div class="progress"><span></span></div>
 </div>
 
 <!-- DESKTOP -->
@@ -46,128 +65,135 @@ Initializing portfolio environment
 <div class="icon" onclick="openWin('about')"><div></div>About</div>
 <div class="icon" onclick="openWin('pixl2d')"><div></div>Pixl2D</div>
 <div class="icon" onclick="openWin('rendr3d')"><div></div>Rendr3D</div>
-<div class="icon" onclick="openWin('bobmtag')"><div></div>Bobm Tag</div>
 <div class="icon" onclick="openWin('roblox')"><div></div>Roblox</div>
+<div class="icon" onclick="openWin('terminal')"><div></div>Terminal</div>
+<div class="icon" onclick="openWin('settings')"><div></div>Settings</div>
 </div>
 </div>
 
-<!-- ABOUT -->
+<!-- TASKBAR -->
+<div id="taskbar"></div>
+
+<!-- ABOUT WINDOW -->
 <div class="window" id="about">
 <div class="title-bar">About</div>
 <div class="content">
-<p>
-I am a developer focused on building engines, games, and interactive systems.
-This portfolio demonstrates my evolution from early prototypes to current projects.
-</p>
-<p>
-Early experimentation began with a project called <strong>Bobm Tag</strong>,
-a hot-potato style game centered on timed explosives between players.
-</p>
-<span class="hidden-clue">pressure mechanics appeared earlier than expected</span>
+<p>Hi! I'm a developer building games, engines, and interactive systems. This portfolio is a semi-retro PC simulator showcasing my work.</p>
 </div>
 </div>
 
-<!-- PIXL2D -->
+<!-- PIXL2D WINDOW -->
 <div class="window" id="pixl2d">
 <div class="title-bar">Pixl2D Engine</div>
 <div class="content">
-<p>
-Pixl2D is a custom 2D game engine built in Roblox focusing on deterministic movement, collisions, and modular gameplay.
-</p>
+<p>Mini 2D engine demo. Use arrow keys or touch buttons.</p>
 <canvas id="pixlDemo" width="260" height="180"></canvas>
-<p>
-<a href="https://github.com/Axolotleless/Pixl2D" target="_blank">View source on GitHub</a>
-</p>
+<div class="touch-controls">
+<button class="touch-btn" data-dir="up">↑</button>
+<button class="touch-btn" data-dir="down">↓</button>
+<button class="touch-btn" data-dir="left">←</button>
+<button class="touch-btn" data-dir="right">→</button>
+</div>
 </div>
 </div>
 
-<!-- RENDR3D -->
+<!-- RENDR3D WINDOW -->
 <div class="window" id="rendr3d">
-<div class="title-bar">Rendr3D Renderer</div>
+<div class="title-bar">Rendr3D Demo</div>
 <div class="content">
-<p>
-Rendr3D is a PS1-style 3D renderer in Roblox without using external APIs.
-</p>
-<div class="project">
-Techniques explored:
-<ul>
-<li id="rendr-btn1">Vertex transformations</li>
-<li id="rendr-btn2">Custom projection math</li>
-<li id="rendr-btn3">Low-res aesthetic constraints</li>
-<li>Software style rendering</li>
-</ul>
-</div>
+<p>Mini 3D “Doom-lite” scene. Reach the yellow cube to win!</p>
 <canvas id="rendrDemo" width="260" height="180"></canvas>
-<p><a href="https://github.com/Axolotleless/Rendr3D-PS1-Styled-" target="_blank">View source on GitHub</a></p>
-<span class="hidden-clue">KittyVille hint: cats are watching</span>
-<span class="hidden-clue">BoomTag hint: precursor to explosives</span>
+<div class="touch-controls">
+<button class="touch-btn" data-r="forward">↑</button>
+<button class="touch-btn" data-r="back">↓</button>
+<button class="touch-btn" data-r="left">←</button>
+<button class="touch-btn" data-r="right">→</button>
+</div>
 </div>
 </div>
 
-<!-- BOBM TAG -->
+<!-- BOBM TAG EASTER EGG -->
 <div class="window" id="bobmtag">
-<div class="title-bar">Bobm Tag</div>
+<div class="title-bar">Bobm Tag Easter Egg</div>
 <div class="content">
-<p>
-Bobm Tag was my first complete gameplay-focused project. It introduced pressure-driven mechanics and timed state transitions.
-</p>
-<div class="project">
-Design limitations at the time:
-<ul>
-<li id="bobm-click">Minimal player feedback and UI</li>
-<li>Limited understanding of player psychology</li>
-<li>Basic balancing and difficulty curves</li>
-<li>Naive handling of edge cases</li>
-</ul>
-</div>
-<p>
-Many later systems evolved from these early experiments.
-</p>
-<p style="opacity:0.7; font-size:11px;">
-Early mechanics still influence current projects.
-</p>
+<p>Congratulations! You unlocked my first project: Bobm Tag.</p>
+<p>Mini “hot potato” demo. Tap/click the bomb to pass it.</p>
+<canvas id="bobmDemo" width="260" height="180"></canvas>
 </div>
 </div>
 
-<!-- ROBLOX -->
+<!-- ROBLOX WINDOW -->
 <div class="window" id="roblox">
 <div class="title-bar">Roblox Profile</div>
 <div class="content">
-<p>
-Roblox is a primary platform for prototyping engines and interactive systems.
-</p>
-<a href="https://www.roblox.com/users/3893603034/profile?friendshipSourceType=PlayerSearch" target="_blank">
-Open Roblox Profile
-</a>
-<span class="hidden-clue">ShakeSpace hint: physics chaos experiments</span>
-<span class="hidden-clue">DoomBuster hint: action pacing</span>
+<p>Platform for prototyping engines and interactive systems.</p>
+<a href="https://www.roblox.com/users/3893603034/profile?friendshipSourceType=PlayerSearch" target="_blank">Open Roblox Profile</a>
+</div>
+</div>
+
+<!-- TERMINAL -->
+<div class="window" id="terminal">
+<div class="title-bar">Terminal</div>
+<div class="content">
+<p>Fun little terminal window. Type 'help' for options.</p>
+</div>
+</div>
+
+<!-- SETTINGS -->
+<div class="window" id="settings">
+<div class="title-bar">Settings</div>
+<div class="content">
+<p>Retro theme settings go here. Adjust CRT intensity, toggle sparkles, etc.</p>
 </div>
 </div>
 
 </div>
 
 <script>
-setTimeout(()=>{
-  document.getElementById("boot").style.display="none";
-  document.getElementById("desktop").style.display="block";
-},2200);
+// ---------- BOOT ANIMATION ----------
+let progress = 0;
+let bootSpan = document.querySelector("#boot .progress span");
+let bootInterval = setInterval(()=>{
+  progress+=1;
+  bootSpan.style.width = progress + "%";
+  if(progress>=100){
+    clearInterval(bootInterval);
+    document.getElementById("boot").style.display="none";
+    document.getElementById("desktop").style.display="block";
+    initDesktop();
+  }
+},20);
 
+// ---------- DESKTOP AND WINDOWS ----------
 function openWin(id){
   document.querySelectorAll(".window").forEach(w=>w.style.display="none");
   document.getElementById(id).style.display="block";
+  updateTaskbar(id);
+}
+function updateTaskbar(id){
+  const taskbar = document.getElementById("taskbar");
+  if(!document.getElementById("taskbtn-"+id)){
+    let btn = document.createElement("button");
+    btn.id="taskbtn-"+id;
+    btn.textContent=id;
+    btn.onclick=()=>openWin(id);
+    taskbar.appendChild(btn);
+  }
 }
 
-// PIXL2D DEMO
+// ---------- PIXL2D DEMO ----------
 const pd = document.getElementById("pixlDemo");
 if(pd){
   const ctx = pd.getContext("2d");
-  const pl = {x:20,y:20,s:12,v:2};
-  const blocks = [{x:60,y:40,w:120,h:16},{x:40,y:100,w:16,h:60},{x:160,y:20,w:16,h:120}];
-  const keys = {};
+  const pl={x:20,y:20,s:12,v:2};
+  const blocks=[{x:60,y:40,w:120,h:16},{x:40,y:100,w:16,h:60},{x:160,y:20,w:16,h:120}];
+  const keys={};
   window.addEventListener("keydown",e=>keys[e.key]=true);
   window.addEventListener("keyup",e=>keys[e.key]=false);
+
   function collide(a,b){return a.x<a.w+b.x && a.x+a.s>b.x && a.y<b.h+b.y && a.y+a.s>b.y;}
-  function step(){
+
+  function stepPixl(){
     let nx=pl.x,ny=pl.y;
     if(keys.ArrowUp) ny-=pl.v;
     if(keys.ArrowDown) ny+=pl.v;
@@ -176,51 +202,105 @@ if(pd){
     const t={...pl,x:nx,y:ny};
     if(!blocks.some(b=>collide(t,b))){pl.x=nx;pl.y=ny;}
     ctx.clearRect(0,0,pd.width,pd.height);
-    ctx.fillStyle="#f7e34b";
-    ctx.fillRect(pl.x,pl.y,pl.s,pl.s);
-    ctx.fillStyle="#003cff";
-    blocks.forEach(b=>ctx.fillRect(b.x,b.y,b.w,b.h));
-    requestAnimationFrame(step);
+    ctx.fillStyle="#f7e34b"; ctx.fillRect(pl.x,pl.y,pl.s,pl.s);
+    ctx.fillStyle="#003cff"; blocks.forEach(b=>ctx.fillRect(b.x,b.y,b.w,b.h));
+    requestAnimationFrame(stepPixl);
   }
-  step();
-}
+  stepPixl();
 
-// RENDR3D PUZZLE TO UNLOCK BOBM TAG
-let rendrSequence = [];
-let bobmUnlocked = false;
-const rendrOrder = ["rendr-btn1","rendr-btn3","rendr-btn2"]; // correct order
-rendrOrder.forEach(id=>{
-  const el = document.getElementById(id);
-  el.addEventListener("click", ()=>{
-    rendrSequence.push(id);
-    if(rendrSequence.length>3) rendrSequence.shift();
-    if(rendrSequence.join(",")===rendrOrder.join(",")) unlockBobm();
+  // Touch buttons
+  document.querySelectorAll("#pixl2d .touch-btn").forEach(btn=>{
+    btn.addEventListener("touchstart",(e)=>{
+      e.preventDefault();
+      keys["Arrow"+btn.dataset.dir.charAt(0).toUpperCase()+btn.dataset.dir.slice(1)] = true;
+    });
+    btn.addEventListener("touchend",(e)=>{
+      e.preventDefault();
+      keys["Arrow"+btn.dataset.dir.charAt(0).toUpperCase()+btn.dataset.dir.slice(1)] = false;
+    });
   });
-});
-
-function unlockBobm(){
-  if(bobmUnlocked) return;
-  bobmUnlocked=true;
-  openWin("bobmtag");
-  alert("Bobm Tag unlocked! Explore its window.");
 }
 
-// BOBM TAG PUZZLE TO UNLOCK ANIMOL69
-let animolUnlocked = false;
-const bobmClickEl = document.getElementById("bobm-click");
-let bobmClickCount = 0;
-bobmClickEl.addEventListener("click", ()=>{
-  if(animolUnlocked) return;
-  bobmClickCount++;
-  if(bobmClickCount===3){
-    animolUnlocked=true;
-    const p = document.createElement("p");
-    p.style.fontWeight="bold";
-    p.style.color="#f7e34b";
-    p.textContent="Animol69 unlocked!";
-    bobmClickEl.parentElement.appendChild(p);
+// ---------- RENDR3D DEMO ----------
+const rd = document.getElementById("rendrDemo");
+if(rd){
+  const ctx = rd.getContext("2d");
+  let player={x:130,y:150},goal={x:200,y:50,size:12};
+  const walls=[{x:60,y:60,w:140,h:16},{x:40,y:100,w:16,h:60},{x:160,y:20,w:16,h:120}];
+  const keys={};
+  window.addEventListener("keydown",e=>keys[e.key]=true);
+  window.addEventListener("keyup",e=>keys[e.key]=false);
+
+  function stepRendr(){
+    if(keys["w"]||keys["ArrowUp"]) player.y-=2;
+    if(keys["s"]||keys["ArrowDown"]) player.y+=2;
+    if(keys["a"]||keys["ArrowLeft"]) player.x-=2;
+    if(keys["d"]||keys["ArrowRight"]) player.x+=2;
+    ctx.clearRect(0,0,rd.width,rd.height);
+    ctx.fillStyle="#f7e34b"; ctx.fillRect(goal.x,goal.y,goal.size,goal.size);
+    ctx.fillStyle="#003cff"; walls.forEach(w=>ctx.fillRect(w.x,w.y,w.w,w.h));
+    ctx.fillStyle="#ff0033"; ctx.fillRect(player.x,player.y,12,12);
+
+    // Win condition
+    if(player.x<goal.x+goal.size && player.x+12>goal.x && player.y<goal.y+goal.size && player.y+12>goal.y){
+      alert("You reached the goal! Bobm Tag Easter Egg unlocked.");
+      openWin("bobmtag");
+    }
+
+    requestAnimationFrame(stepRendr);
   }
-});
+  stepRendr();
+
+  // Touch buttons
+  document.querySelectorAll("#rendr3d .touch-btn").forEach(btn=>{
+    btn.addEventListener("touchstart",(e)=>{
+      e.preventDefault();
+      if(btn.dataset.r==="forward") keys["w"]=true;
+      if(btn.dataset.r==="back") keys["s"]=true;
+      if(btn.dataset.r==="left") keys["a"]=true;
+      if(btn.dataset.r==="right") keys["d"]=true;
+    });
+    btn.addEventListener("touchend",(e)=>{
+      e.preventDefault();
+      if(btn.dataset.r==="forward") keys["w"]=false;
+      if(btn.dataset.r==="back") keys["s"]=false;
+      if(btn.dataset.r==="left") keys["a"]=false;
+      if(btn.dataset.r==="right") keys["d"]=false;
+    });
+  });
+}
+
+// ---------- BOBM TAG DEMO ----------
+const bd = document.getElementById("bobmDemo");
+if(bd){
+  const ctx = bd.getContext("2d");
+  let bomb={x:20,y:20,s:12};
+  let positions=[{x:20,y:20},{x:100,y:20},{x:100,y:140},{x:20,y:140},{x:130,y:80}];
+
+  function moveBomb(){
+    bomb=positions[Math.floor(Math.random()*positions.length)];
+  }
+  setInterval(moveBomb,800);
+
+  function stepBobm(){
+    ctx.clearRect(0,0,bd.width,bd.height);
+    ctx.fillStyle="#ff0033"; ctx.fillRect(bomb.x,bomb.y,bomb.s,bomb.s);
+    requestAnimationFrame(stepBobm);
+  }
+  stepBobm();
+
+  bd.addEventListener("click",()=>moveBomb());
+  bd.addEventListener("touchstart",(e)=>{e.preventDefault(); moveBomb();});
+}
+
+// ---------- FLOATING SPARKLES ----------
+for(let i=0;i<20;i++){
+  let sp=document.createElement("div");
+  sp.className="sparkle";
+  sp.style.left=Math.random()*100+"%";
+  sp.style.top=Math.random()*100+"%";
+  document.body.appendChild(sp);
+}
 </script>
 </body>
 </html>
