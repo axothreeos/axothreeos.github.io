@@ -1,229 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>♡ axo's cute homepage ♡</title>
+<meta charset="UTF-8">
+<title>Axo Engine Portfolio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      background-color: #ffe6f2;
-      background-image:
-        url("https://www.transparenttextures.com/patterns/stardust.png");
-      color: #330033;
-      font-family: "Comic Sans MS", "Comic Sans", cursive;
-    }
+<style>
+html {
+  scroll-behavior: smooth;
+  background: #0b0d12;
+  color: white;
+  font-family: system-ui, sans-serif;
+}
 
-    a {
-      color: #ff66cc;
-      font-weight: bold;
-      text-decoration: none;
-    }
+body {
+  margin: 0;
+  overflow-x: hidden;
+}
 
-    a:hover {
-      color: #990066;
-      text-decoration: underline;
-    }
+section {
+  min-height: 100vh;
+  padding: 120px 10vw;
+  position: relative;
+}
 
-    .page {
-      width: 760px;
-      margin: 20px auto;
-      background-color: #fff0fa;
-      border: 6px ridge #ff99cc;
-      padding: 10px;
-    }
+h1 {
+  font-size: clamp(3rem, 6vw, 6rem);
+}
 
-    .header {
-      text-align: center;
-      background: linear-gradient(#ffccff, #ff99cc);
-      border: 4px outset white;
-      padding: 10px;
-    }
+p {
+  max-width: 600px;
+  opacity: 0.85;
+  line-height: 1.6;
+}
 
-    h1 {
-      margin: 0;
-      color: #ff3399;
-      text-shadow: 2px 2px white ուն
-    }
+.glass {
+  backdrop-filter: blur(20px);
+  background: rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
 
-    marquee {
-      color: #ff3399;
-      background: #fff;
-      border: 2px dotted #ff99cc;
-      padding: 4px;
-      margin-top: 8px;
-    }
+#engineCanvas {
+  width: 100%;
+  height: 400px;
+  display: block;
+  border-radius: 16px;
+  background: black;
+}
 
-    .layout {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
+button {
+  background: linear-gradient(135deg, #5effff, #8a5eff);
+  border: none;
+  padding: 14px 22px;
+  border-radius: 999px;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 20px;
+}
 
-    .sidebar {
-      width: 200px;
-      background-color: #ffe0f0;
-      border: 3px inset #ffb6d9;
-      padding: 8px;
-      font-size: 14px;
-    }
+.retro body {
+  background: #000020;
+  color: #00ffcc;
+  font-family: "Courier New", monospace;
+}
 
-    .main {
-      flex: 1;
-      background-color: #fff5fb;
-      border: 3px inset #ffb6d9;
-      padding: 10px;
-    }
+.retro .glass {
+  background: rgba(0,0,0,0.8);
+  border: 2px solid #00ffcc;
+  box-shadow: none;
+}
 
-    .box {
-      border: 2px dotted #ff66cc;
-      padding: 8px;
-      margin-bottom: 10px;
-      background-color: #ffffff;
-    }
+.scanlines {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.03),
+    rgba(255,255,255,0.03) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: overlay;
+  opacity: 0;
+}
 
-    .counter {
-      font-family: monospace;
-      background: #fff;
-      color: #ff3399;
-      padding: 4px;
-      border: 1px solid #ff99cc;
-      display: inline-block;
-    }
-
-    blink {
-      animation: blink 1s steps(1) infinite;
-    }
-
-    @keyframes blink {
-      50% { visibility: hidden; }
-    }
-
-    .heart {
-      position: fixed;
-      top: -20px;
-      font-size: 16px;
-      color: #ff66cc;
-      animation: fall 8s linear infinite;
-      pointer-events: none;
-    }
-
-    @keyframes fall {
-      from { transform: translateY(0); }
-      to { transform: translateY(110vh); }
-    }
-
-    footer {
-      text-align: center;
-      font-size: 12px;
-      color: #996699;
-      margin-top: 10px;
-    }
-  </style>
+.retro .scanlines {
+  opacity: 1;
+}
+</style>
 </head>
 
 <body>
 
-<!-- MIDI MUSIC -->
-<audio autoplay loop>
-  <source src="https://files.catbox.moe/7xjv0k.mid" type="audio/midi">
-</audio>
+<div class="scanlines"></div>
 
-<div class="page">
+<section>
+  <h1>Axo Engine</h1>
+  <p>
+    This website is not a website.
+    It is a browser-based rendering experiment.
+  </p>
+</section>
 
-  <div class="header">
-    <h1>♡ axo's homepage ♡</h1>
-    <marquee>
-      welcome to my cute little website!!! please enjoy your stay!!!
-    </marquee>
+<section>
+  <div class="glass">
+    <h2>Custom Web 3D Rendering Engine</h2>
+    <p>
+      Built from scratch using raw canvas math.
+      No libraries. No shortcuts.
+    </p>
+    <canvas id="engineCanvas"></canvas>
+    <button id="timeBtn">Engage Time Travel</button>
   </div>
+</section>
 
-  <div class="layout">
+<section>
+  <h2>What Your Browser Can Do</h2>
+  <p>
+    Real-time animation, procedural rendering,
+    dynamic visual styles, engine logic,
+    all running at 60fps in a tab.
+  </p>
+</section>
 
-    <div class="sidebar">
-      <div class="box">
-        <b>navigation</b><br><br>
-        ♡ <a href="#home">home</a><br>
-        ♡ <a href="#about">about me</a><br>
-        ♡ <a href="#updates">updates</a><br>
-        ♡ <a href="#links">links</a>
-      </div>
-
-      <div class="box">
-        <b>status</b><br>
-        <blink>ONLINE</blink><br><br>
-        mood: happy<br>
-        music: midi<br>
-        vibe: pastel
-      </div>
-
-      <div class="box">
-        <b>buttons</b><br><br>
-        <img src="https://cyber.dabamos.de/88x31/neocities.gif"><br>
-        <img src="https://cyber.dabamos.de/88x31/pink.gif">
-      </div>
-    </div>
-
-    <div class="main" id="home">
-
-      <div class="box">
-        <h2>hello!!!</h2>
-        <p>
-          hi im axo and this is my cute little homepage.
-          i made this because the modern web is boring and this is more fun ♡
-        </p>
-      </div>
-
-      <div class="box" id="about">
-        <h2>about me</h2>
-        <p>
-          i like making games, engines, and weird retro stuff.
-          this site is hand coded just for fun!!!
-        </p>
-      </div>
-
-      <div class="box" id="updates">
-        <h2>updates</h2>
-        <ul>
-          <li>02/04/2026 made this site cute</li>
-          <li>02/03/2026 learned html again</li>
-          <li>02/02/2026 discovered neocities</li>
-        </ul>
-      </div>
-
-      <div class="box" id="links">
-        <h2>cool links</h2>
-        <ul>
-          <li><a href="https://neocities.org" target="_blank">neocities</a></li>
-          <li><a href="https://github.com" target="_blank">github</a></li>
-          <li><a href="#">my projects</a></li>
-        </ul>
-      </div>
-
-      <div class="box">
-        <h2>visitor counter</h2>
-        <div class="counter">00000123</div>
-      </div>
-
-    </div>
-
-  </div>
-
-  <footer>
-    made with love ♡ pure html ♡ hosted on github pages
-  </footer>
-
-</div>
-
-<!-- floating hearts -->
 <script>
-  for (let i = 0; i < 15; i++) {
-    const heart = document.createElement("div");
-    heart.className = "heart";
-    heart.textContent = "♡";
-    heart.style.left = Math.random() * 100 + "vw";
-    heart.style.animationDelay = Math.random() * 8 + "s";
-    document.body.appendChild(heart);
+const canvas = document.getElementById("engineCanvas");
+const ctx = canvas.getContext("2d");
+
+let retro = false;
+let t = 0;
+
+function resize() {
+  canvas.width = canvas.clientWidth * devicePixelRatio;
+  canvas.height = canvas.clientHeight * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+}
+resize();
+window.addEventListener("resize", resize);
+
+function project3D(x, y, z) {
+  const scale = retro ? 120 : 240;
+  const depth = 4 + z;
+  return {
+    x: canvas.width / 2 + (x / depth) * scale,
+    y: canvas.height / 2 + (y / depth) * scale
+  };
+}
+
+function drawCube(size) {
+  const points = [];
+  for (let dx of [-1,1])
+    for (let dy of [-1,1])
+      for (let dz of [-1,1])
+        points.push(project3D(
+          dx * size,
+          dy * size,
+          dz * size
+        ));
+
+  ctx.strokeStyle = retro ? "#00ffcc" : "#5effff";
+  ctx.lineWidth = retro ? 1 : 2;
+
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const dx = Math.abs(i ^ j);
+      if (dx === 1 || dx === 2 || dx === 4) {
+        ctx.beginPath();
+        ctx.moveTo(points[i].x, points[i].y);
+        ctx.lineTo(points[j].x, points[j].y);
+        ctx.stroke();
+      }
+    }
   }
+}
+
+function loop() {
+  t += 0.01;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  ctx.save();
+  ctx.translate(
+    Math.sin(t) * (retro ? 4 : 0),
+    Math.cos(t) * (retro ? 4 : 0)
+  );
+
+  drawCube(1 + Math.sin(t) * 0.2);
+  ctx.restore();
+
+  requestAnimationFrame(loop);
+}
+loop();
+
+document.getElementById("timeBtn").onclick = () => {
+  retro = !retro;
+  document.documentElement.classList.toggle("retro", retro);
+};
 </script>
 
 </body>
