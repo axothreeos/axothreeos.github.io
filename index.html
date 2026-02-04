@@ -9,51 +9,25 @@
     html, body {
       margin: 0;
       padding: 0;
-      background: #050505;
-      color: #eaffea;
+      background: #000;
+      color: #caffd6;
       font-family: Tahoma, Verdana, Arial, sans-serif;
       min-height: 100%;
     }
 
-    /* CRT CORNER CURVE ONLY */
-    .screen {
-      position: relative;
-      max-width: 1100px;
+    /* PAGE WRAPPER */
+    .page {
+      max-width: 1000px;
       margin: 20px auto;
       padding: 16px;
-      background: radial-gradient(circle at top, #111, #000 70%);
-      border-radius: 22px;
-      overflow: hidden;
+      background: linear-gradient(#0b0b0b, #000);
+      border: 3px solid #ff5ecb;
+      border-radius: 18px;
       box-shadow:
-        inset 0 0 40px rgba(0,0,0,0.9),
-        0 0 30px rgba(0,255,120,0.15);
-    }
+        0 0 30px rgba(255, 90, 200, 0.25),
+        inset 0 0 20px rgba(0,0,0,0.9);
 
-    .screen::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at top left, rgba(255,0,0,0.08), transparent 35%),
-        radial-gradient(circle at top right, rgba(0,255,255,0.08), transparent 35%),
-        radial-gradient(circle at bottom left, rgba(0,255,255,0.08), transparent 35%),
-        radial-gradient(circle at bottom right, rgba(255,0,0,0.08), transparent 35%);
-    }
-
-    .screen::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background: repeating-linear-gradient(
-        to bottom,
-        rgba(255,255,255,0.03),
-        rgba(255,255,255,0.03) 1px,
-        rgba(0,0,0,0) 3px,
-        rgba(0,0,0,0) 5px
-      );
-      mix-blend-mode: overlay;
+      filter: url(#fisheye);
     }
 
     header {
@@ -62,20 +36,22 @@
     }
 
     header h1 {
+      margin: 0;
       color: #ff7ad9;
-      text-shadow:
-        0 0 6px rgba(255,120,200,0.6);
+      text-shadow: 0 0 8px rgba(255,120,200,0.6);
     }
 
     header p {
-      color: #7dffcc;
+      margin: 6px 0 0;
       font-size: 14px;
+      color: #7dffcc;
     }
 
     .layout {
       display: grid;
-      grid-template-columns: 260px 1fr;
+      grid-template-columns: 240px 1fr;
       gap: 14px;
+      margin-top: 12px;
     }
 
     @media (max-width: 800px) {
@@ -84,110 +60,123 @@
       }
     }
 
-    .panel {
-      background: linear-gradient(#0f0f0f, #070707);
-      border: 2px solid #ff4fd8;
-      border-radius: 14px;
-      padding: 12px;
-      box-shadow: inset 0 0 12px rgba(255,80,200,0.15);
+    .box {
+      background: linear-gradient(#111, #060606);
+      border: 2px solid #6fffc1;
+      border-radius: 12px;
+      padding: 10px;
     }
 
-    .panel h2 {
+    .box h2 {
       margin-top: 0;
-      color: #7dffcc;
-    }
-
-    a {
-      color: #6ff;
-      text-decoration: none;
-    }
-
-    a:hover {
-      color: #ff7ad9;
+      font-size: 16px;
+      color: #6fffc1;
     }
 
     ul {
       padding-left: 18px;
     }
 
-    /* AXOLOTL PNG DECOR */
-    .axolotl {
-      position: absolute;
-      width: 120px;
-      image-rendering: pixelated;
-      opacity: 0.9;
-      filter: drop-shadow(0 0 6px rgba(255,150,200,0.6));
+    a {
+      color: #66ffff;
+      text-decoration: none;
     }
 
-    .axo1 { top: 40px; left: -20px; }
-    .axo2 { bottom: 30px; right: -10px; }
+    a:hover {
+      color: #ff7ad9;
+      text-decoration: underline;
+    }
+
+    .status {
+      font-size: 13px;
+      line-height: 1.4;
+    }
 
     footer {
+      margin-top: 14px;
       text-align: center;
       font-size: 12px;
       color: #aaa;
-      margin-top: 12px;
     }
   </style>
 </head>
 
 <body>
 
-<div class="screen">
+<!-- SVG FILTERS -->
+<svg width="0" height="0">
+  <!-- Subtle fisheye lens distortion -->
+  <filter id="fisheye">
+    <feTurbulence
+      type="fractalNoise"
+      baseFrequency="0.008"
+      numOctaves="1"
+      result="noise" />
+    <feDisplacementMap
+      in="SourceGraphic"
+      in2="noise"
+      scale="12"
+      xChannelSelector="R"
+      yChannelSelector="G" />
+  </filter>
+</svg>
 
-  <!-- Decorative Axolotls -->
-  <img src="https://i.imgur.com/6XKQZQk.png" class="axolotl axo1" alt="Axolotl">
-  <img src="https://i.imgur.com/6XKQZQk.png" class="axolotl axo2" alt="Axolotl">
+<div class="page">
 
   <header>
     <h1>★ Axo's Portfolio Stuff ★</h1>
-    <p>Custom engines • retro UI • weird software energy</p>
+    <p>Welcome to my personal page on the internet</p>
   </header>
 
   <div class="layout">
 
-    <div class="panel">
+    <!-- LEFT SIDEBAR -->
+    <div class="box">
       <h2>Navigation</h2>
       <ul>
-        <li><a href="#">About Axo</a></li>
+        <li><a href="#">About Me</a></li>
         <li><a href="#">Projects</a></li>
         <li><a href="#">Screenshots</a></li>
         <li><a href="#">Guestbook</a></li>
+        <li><a href="#">Links</a></li>
       </ul>
 
       <h2>Status</h2>
-      <p>
-        Mood: building cool stuff<br>
-        Era: 1999-2004<br>
-        Monitor: CRT
-      </p>
+      <div class="status">
+        Name: Axo<br>
+        Online: probably<br>
+        Era: late 90s / early 00s<br>
+        Host: Neocities<br>
+        Mood: building weird stuff
+      </div>
     </div>
 
-    <div class="panel">
-      <h2>Welcome</h2>
+    <!-- MAIN CONTENT -->
+    <div class="box">
+      <h2>About This Site</h2>
       <p>
-        Yo. I’m Axo. I like making engines, interfaces,
-        and websites that feel like you found them on an old hard drive.
+        This is my little corner of the web.
+        No feeds, no algorithms, just stuff I make and things I like.
       </p>
 
       <h2>Projects</h2>
       <ul>
         <li><b>Pixl2D</b> – custom 2D engine</li>
-        <li><b>Rendr3D</b> – experimental renderer</li>
-        <li><b>XP-style Portfolio</b> – time travel UI</li>
+        <li><b>Rendr3D</b> – experimental 3D renderer</li>
+        <li><b>XP-style Portfolio</b> – retro UI experiment</li>
         <li><b>Bobm Tag</b> – secret thing</li>
       </ul>
 
       <p>
-        This site is intentionally weird.
-        If it looks slightly wrong, that’s the point.
+        This site is intentionally simple and a little strange.
+        If it feels like it was made by one person for fun, that’s correct.
       </p>
     </div>
 
   </div>
 
   <footer>
-    © 2001-ish Axo • best viewed while listening to Winamp
+    © 2000-something Axo • best viewed on any browser that still has a soul
   </footer>
 
 </div>
