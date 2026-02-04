@@ -1,185 +1,187 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Axo's Portfolio Stuff</title>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>★ Welcome to My Homepage ★</title>
 
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      color: #caffd6;
-      font-family: Tahoma, Verdana, Arial, sans-serif;
-      min-height: 100%;
-    }
-
-    /* PAGE WRAPPER */
-    .page {
-      max-width: 1000px;
-      margin: 20px auto;
-      padding: 16px;
-      background: linear-gradient(#0b0b0b, #000);
-      border: 3px solid #ff5ecb;
-      border-radius: 18px;
-      box-shadow:
-        0 0 30px rgba(255, 90, 200, 0.25),
-        inset 0 0 20px rgba(0,0,0,0.9);
-
-      filter: url(#fisheye);
-    }
-
-    header {
-      text-align: center;
-      padding: 10px;
-    }
-
-    header h1 {
-      margin: 0;
-      color: #ff7ad9;
-      text-shadow: 0 0 8px rgba(255,120,200,0.6);
-    }
-
-    header p {
-      margin: 6px 0 0;
-      font-size: 14px;
-      color: #7dffcc;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 240px 1fr;
-      gap: 14px;
-      margin-top: 12px;
-    }
-
-    @media (max-width: 800px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .box {
-      background: linear-gradient(#111, #060606);
-      border: 2px solid #6fffc1;
-      border-radius: 12px;
-      padding: 10px;
-    }
-
-    .box h2 {
-      margin-top: 0;
-      font-size: 16px;
-      color: #6fffc1;
-    }
-
-    ul {
-      padding-left: 18px;
+    body {
+      background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+      background-color: #000033;
+      color: #ffffff;
+      font-family: "Comic Sans MS", "Comic Sans", cursive;
+      cursor: url("https://cur.cursors-4u.net/cursors/cur-2/cur116.cur"), auto;
     }
 
     a {
-      color: #66ffff;
+      color: #00ffff;
       text-decoration: none;
     }
 
     a:hover {
-      color: #ff7ad9;
+      color: #ff66ff;
       text-decoration: underline;
     }
 
-    .status {
-      font-size: 13px;
-      line-height: 1.4;
+    .container {
+      width: 760px;
+      margin: 0 auto;
+      border: 6px ridge #ff66ff;
+      background-color: #000066;
+      padding: 10px;
     }
 
-    footer {
-      margin-top: 14px;
+    .header {
+      text-align: center;
+      background: linear-gradient(#ff00ff, #6600ff);
+      padding: 10px;
+      border: 4px outset #ffffff;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 36px;
+      color: yellow;
+      text-shadow: 2px 2px #ff0000;
+    }
+
+    .marquee {
+      background-color: black;
+      color: #00ff00;
+      border: 2px dashed #00ff00;
+      padding: 5px;
+      margin: 10px 0;
+    }
+
+    .content {
+      display: flex;
+      gap: 10px;
+    }
+
+    .sidebar {
+      width: 200px;
+      background-color: #330066;
+      border: 3px inset #ffccff;
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    .main {
+      flex: 1;
+      background-color: #000099;
+      border: 3px inset #ffccff;
+      padding: 10px;
+    }
+
+    .box {
+      border: 2px dotted #ffff00;
+      padding: 6px;
+      margin-bottom: 10px;
+      background-color: #000033;
+    }
+
+    .footer {
       text-align: center;
       font-size: 12px;
-      color: #aaa;
+      margin-top: 10px;
+      color: #cccccc;
+    }
+
+    blink {
+      animation: blink 1s steps(1, start) infinite;
+    }
+
+    @keyframes blink {
+      50% { visibility: hidden; }
+    }
+
+    .counter {
+      font-family: monospace;
+      background-color: black;
+      color: #00ff00;
+      padding: 4px;
+      display: inline-block;
+      border: 1px solid #00ff00;
     }
   </style>
 </head>
 
 <body>
 
-<!-- SVG FILTERS -->
-<svg width="0" height="0">
-  <!-- Subtle fisheye lens distortion -->
-  <filter id="fisheye">
-    <feTurbulence
-      type="fractalNoise"
-      baseFrequency="0.008"
-      numOctaves="1"
-      result="noise" />
-    <feDisplacementMap
-      in="SourceGraphic"
-      in2="noise"
-      scale="12"
-      xChannelSelector="R"
-      yChannelSelector="G" />
-  </filter>
-</svg>
+  <div class="container">
 
-<div class="page">
-
-  <header>
-    <h1>★ Axo's Portfolio Stuff ★</h1>
-    <p>Welcome to my personal page on the internet</p>
-  </header>
-
-  <div class="layout">
-
-    <!-- LEFT SIDEBAR -->
-    <div class="box">
-      <h2>Navigation</h2>
-      <ul>
-        <li><a href="#">About Me</a></li>
-        <li><a href="#">Projects</a></li>
-        <li><a href="#">Screenshots</a></li>
-        <li><a href="#">Guestbook</a></li>
-        <li><a href="#">Links</a></li>
-      </ul>
-
-      <h2>Status</h2>
-      <div class="status">
-        Name: Axo<br>
-        Online: probably<br>
-        Era: late 90s / early 00s<br>
-        Host: Neocities<br>
-        Mood: building weird stuff
+    <div class="header">
+      <h1>★ MY AWESOME HOMEPAGE ★</h1>
+      <div class="marquee">
+        <marquee behavior="scroll" direction="left">
+          welcome to my website!!! thanks for stopping by!!! dont forget to sign my guestbook!!!
+        </marquee>
       </div>
     </div>
 
-    <!-- MAIN CONTENT -->
-    <div class="box">
-      <h2>About This Site</h2>
-      <p>
-        This is my little corner of the web.
-        No feeds, no algorithms, just stuff I make and things I like.
-      </p>
+    <div class="content">
 
-      <h2>Projects</h2>
-      <ul>
-        <li><b>Pixl2D</b> – custom 2D engine</li>
-        <li><b>Rendr3D</b> – experimental 3D renderer</li>
-        <li><b>XP-style Portfolio</b> – retro UI experiment</li>
-        <li><b>Bobm Tag</b> – secret thing</li>
-      </ul>
+      <div class="sidebar">
+        <div class="box">
+          <b>Navigation</b><br>
+          ★ <a href="#">Home</a><br>
+          ★ <a href="#">About Me</a><br>
+          ★ <a href="#">My Art</a><br>
+          ★ <a href="#">Links</a><br>
+          ★ <a href="#">Guestbook</a>
+        </div>
 
-      <p>
-        This site is intentionally simple and a little strange.
-        If it feels like it was made by one person for fun, that’s correct.
-      </p>
+        <div class="box">
+          <b>Status</b><br>
+          <blink>ONLINE</blink><br><br>
+          Mood: hyper<br>
+          Music: chiptune<br>
+          Drink: soda
+        </div>
+
+        <div class="box">
+          <b>Cool Buttons</b><br><br>
+          <img src="https://cyber.dabamos.de/88x31/anythingbut.gif" alt="button"><br>
+          <img src="https://cyber.dabamos.de/88x31/notepad.gif" alt="button"><br>
+          <img src="https://cyber.dabamos.de/88x31/html_learn_it_today.gif" alt="button">
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="box">
+          <h2>Welcome!!!</h2>
+          <p>
+            hi!!! this is my personal homepage on the world wide web!!!
+            i made this site by hand using pure html just like the old days.
+          </p>
+          <p>
+            feel free to click around and explore. this site is best viewed
+            at 800x600 on a crt monitor 😎
+          </p>
+        </div>
+
+        <div class="box">
+          <h2>Updates</h2>
+          <ul>
+            <li>02/03/2001 added new background</li>
+            <li>01/28/2001 site launched!!!</li>
+            <li>01/15/2001 learned html</li>
+          </ul>
+        </div>
+
+        <div class="box">
+          <h2>Visitor Counter</h2>
+          <div class="counter">00001337</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      © 2001 Me | hosted on geocities | best viewed in netscape
     </div>
 
   </div>
-
-  <footer>
-    © 2000-something Axo • best viewed on any browser that still has a soul
-  </footer>
-
-</div>
 
 </body>
 </html>
