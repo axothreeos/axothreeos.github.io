@@ -2,55 +2,40 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Axo’s Interactive Portfolio</title>
+<title>Axo Engine Portfolio 2.0</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-/* ----------------- GENERAL STYLES ----------------- */
-html {
-  scroll-behavior: smooth;
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow-x: hidden;
   font-family: system-ui, sans-serif;
   background: #0b0d12;
   color: white;
-  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
-
-body {
-  margin: 0;
-}
-
 section {
   min-height: 100vh;
   padding: 120px 10vw;
-  position: relative;
   opacity: 0;
   transform: translateY(40px);
   transition: all 0.8s ease-out;
 }
-
 section.visible {
   opacity: 1;
   transform: translateY(0);
 }
-
 h1, h2 {
   margin: 0 0 20px 0;
 }
-
-h1 {
-  font-size: clamp(3rem, 6vw, 6rem);
-}
-
-h2 {
-  font-size: clamp(2rem, 5vw, 3rem);
-}
-
+h1 { font-size: clamp(3rem, 6vw, 6rem);}
+h2 { font-size: clamp(2rem, 5vw, 3rem);}
 p {
   max-width: 600px;
   line-height: 1.6;
   opacity: 0.85;
 }
-
 .glass {
   backdrop-filter: blur(20px);
   background: rgba(255,255,255,0.08);
@@ -58,47 +43,68 @@ p {
   padding: 40px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.4);
   transition: all 0.5s ease;
+  position: relative;
 }
 
-button {
-  background: linear-gradient(135deg, #5effff, #8a5eff);
+/* GUI PANEL */
+#guiPanel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1000;
+}
+#guiPanel button {
+  font-size: 0.85rem;
+  padding: 12px 18px;
+  border-radius: 12px;
   border: none;
-  padding: 14px 22px;
-  border-radius: 999px;
+  cursor: pointer;
+  background: linear-gradient(135deg,#5effff,#8a5eff);
   color: black;
   font-weight: bold;
-  cursor: pointer;
-  margin-top: 20px;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
 }
-
-button:hover {
+#guiPanel button:hover {
   transform: scale(1.1);
 }
 
-/* ----------------- CANVAS / 3D ENGINE ----------------- */
+/* CANVAS */
 #engineCanvas {
   width: 100%;
-  height: 400px;
+  height: 500px;
   display: block;
   border-radius: 16px;
   background: black;
   margin-top: 20px;
 }
 
-/* ----------------- RETRO / TIME TRAVEL ----------------- */
+/* PARTICLES */
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5effff;
+  pointer-events: none;
+  opacity: 0.8;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.5s ease;
+}
+
+/* RETRO MODE */
 .retro body {
   background: #000020;
   color: #00ffcc;
   font-family: "Courier New", monospace;
 }
-
 .retro .glass {
   background: rgba(0,0,0,0.8);
   border: 2px solid #00ffcc;
   box-shadow: none;
 }
-
 .scanlines {
   pointer-events: none;
   position: fixed;
@@ -114,97 +120,67 @@ button:hover {
   opacity: 0;
   transition: opacity 0.5s ease;
 }
+.retro .scanlines {opacity:1;}
 
-.retro .scanlines {
-  opacity: 1;
-}
-
-/* ----------------- GUI PANEL ----------------- */
-#guiPanel {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 1000;
-}
-
-#guiPanel button {
-  font-size: 0.85rem;
-}
-
-/* ----------------- PARTICLES ----------------- */
-.particle {
+/* DRAGGABLE WINDOWS */
+.window {
   position: absolute;
-  width: 6px;
-  height: 6px;
-  background: #5effff;
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0.8;
-  transform: translate(-50%, -50%);
-  transition: opacity 0.5s ease;
+  background: rgba(20,20,30,0.9);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  cursor: grab;
+  overflow: hidden;
+  touch-action: none;
+  transition: box-shadow 0.2s ease;
 }
-
-/* ----------------- BACKGROUND ANIMATION ----------------- */
-#topSection {
-  background: linear-gradient(135deg, #1a1a2e, #162447);
-  background-size: 400% 400%;
-  animation: gradientAnim 15s ease infinite;
+.window:active {
+  cursor: grabbing;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.8);
 }
-
-@keyframes gradientAnim {
-  0% {background-position:0% 50%;}
-  50% {background-position:100% 50%;}
-  100% {background-position:0% 50%;}
+.window h3 {
+  margin: 0 0 6px 0;
+  font-size: 1.1rem;
 }
-
-/* ----------------- RESPONSIVE ----------------- */
-@media(max-width:600px){
-  section {
-    padding: 80px 5vw;
-  }
-  button {
-    padding: 12px 18px;
-  }
+.window p {
+  margin: 0;
+  font-size: 0.9rem;
 }
 </style>
 </head>
-<body>
 
+<body>
 <div class="scanlines"></div>
 
 <!-- GUI PANEL -->
 <div id="guiPanel">
   <button id="timeBtn">Time Travel</button>
   <button id="particleBtn">Particles: ON</button>
-  <button id="cubeModeBtn">Cube: Smooth</button>
-  <button id="resetCubeBtn">Reset Cube</button>
+  <button id="resetCubeBtn">Reset Cubes</button>
 </div>
 
 <!-- SECTIONS -->
-<section id="topSection">
+<section>
   <h1>Axo Engine Portfolio</h1>
-  <p>Welcome to the ultimate interactive portfolio. Scroll down to explore my skills and custom web experiments.</p>
+  <p>Welcome! Scroll down to explore interactive 3D demos, physics windows, and cutting-edge web experiences.</p>
 </section>
 
 <section>
   <div class="glass">
-    <h2>Custom 3D Cube Demo</h2>
-    <p>This cube is a showcase widget. Rotate it with your mouse or touch. Toggle modes with the panel!</p>
+    <h2>Interactive 3D Engine Demo</h2>
+    <p>Multiple 3D objects rendered using raw WebGL. Drag windows, toggle modes, and explore physics interactions!</p>
     <canvas id="engineCanvas"></canvas>
   </div>
 </section>
 
 <section>
-  <h2>About Me</h2>
-  <p>I specialize in building interactive experiences, custom engines, and pushing web browsers to their limits.</p>
+  <h2>Draggable Windows</h2>
+  <p>These panels are physics-driven and draggable. You can move them anywhere on the page.</p>
 </section>
 
 <section>
-  <h2>More Experiments</h2>
-  <p>Particles, retro modes, scanlines, glitch effects, parallax scrolling—all running in a single webpage.</p>
+  <h2>About Me</h2>
+  <p>I specialize in pushing the web to its limits: real-time 3D, physics, particles, and interactive experiences.</p>
 </section>
 
 <script>
@@ -214,147 +190,217 @@ const observer = new IntersectionObserver((entries)=>{
   entries.forEach(e=>{
     if(e.isIntersecting) e.target.classList.add("visible");
   });
-}, {threshold:0.2});
-sections.forEach(sec => observer.observe(sec));
-
-// ----------------- CANVAS 3D ENGINE -----------------
-const canvas = document.getElementById("engineCanvas");
-const ctx = canvas.getContext("2d");
-let cw, ch;
-function resize() {
-  cw = canvas.clientWidth;
-  ch = canvas.clientHeight;
-  canvas.width = cw*devicePixelRatio;
-  canvas.height = ch*devicePixelRatio;
-  ctx.scale(devicePixelRatio, devicePixelRatio);
-}
-resize();
-window.addEventListener("resize", resize);
-
-let retro = false;
-let cubeMode = "smooth"; // smooth, lowpoly, pixelated
-let particlesEnabled = true;
-let t = 0;
-let mouseX = 0;
-let mouseY = 0;
-let cubeRotX = 0;
-let cubeRotY = 0;
-
-// Mouse / Touch rotation
-canvas.addEventListener("mousemove", e => {
-  const rect = canvas.getBoundingClientRect();
-  mouseX = ((e.clientX - rect.left)/rect.width - 0.5)*Math.PI;
-  mouseY = ((e.clientY - rect.top)/rect.height - 0.5)*Math.PI;
-});
-canvas.addEventListener("touchmove", e => {
-  const rect = canvas.getBoundingClientRect();
-  const touch = e.touches[0];
-  mouseX = ((touch.clientX - rect.left)/rect.width - 0.5)*Math.PI;
-  mouseY = ((touch.clientY - rect.top)/rect.height - 0.5)*Math.PI;
-  e.preventDefault();
-}, {passive:false});
-
-function project3D(x, y, z) {
-  const scale = retro ? 120 : 240;
-  const depth = 4 + z;
-  return {
-    x: cw/2 + (x/depth)*scale,
-    y: ch/2 + (y/depth)*scale
-  };
-}
-
-function drawCube(size){
-  let points = [];
-  for(let dx of [-1,1])
-    for(let dy of [-1,1])
-      for(let dz of [-1,1])
-        points.push(project3D(dx*size, dy*size, dz*size));
-
-  ctx.strokeStyle = retro ? "#00ffcc" : "#5effff";
-  ctx.lineWidth = retro ? 1 : 2;
-
-  for(let i=0;i<points.length;i++){
-    for(let j=i+1;j<points.length;j++){
-      const dx = Math.abs(i^j);
-      if(dx===1||dx===2||dx===4){
-        ctx.beginPath();
-        ctx.moveTo(points[i].x, points[i].y);
-        ctx.lineTo(points[j].x, points[j].y);
-        ctx.stroke();
-      }
-    }
-  }
-}
+},{threshold:0.2});
+sections.forEach(sec=>observer.observe(sec));
 
 // ----------------- PARTICLES -----------------
+let particlesEnabled = true;
 let particles = [];
-function spawnParticle(x, y){
+function spawnParticle(x,y){
   if(!particlesEnabled) return;
   const p = document.createElement("div");
-  p.className = "particle";
-  p.style.left = x+"px";
-  p.style.top = y+"px";
+  p.className="particle";
+  p.style.left=x+"px";
+  p.style.top=y+"px";
   document.body.appendChild(p);
-  particles.push({el:p, life:1});
+  particles.push({el:p,life:1});
 }
 function updateParticles(){
   for(let i=particles.length-1;i>=0;i--){
-    let p = particles[i];
-    p.life -= 0.02;
-    p.el.style.opacity = p.life;
-    if(p.life<=0){
-      p.el.remove();
-      particles.splice(i,1);
-    }
+    let p=particles[i];
+    p.life-=0.02;
+    p.el.style.opacity=p.life;
+    if(p.life<=0){p.el.remove();particles.splice(i,1);}
   }
 }
-
-// ----------------- LOOP -----------------
-function loop(){
-  t += 0.01;
-  ctx.clearRect(0,0,cw,ch);
-
-  cubeRotX += (mouseY - cubeRotX)*0.05;
-  cubeRotY += (mouseX - cubeRotY)*0.05;
-  ctx.save();
-  ctx.translate(cw/2, ch/2);
-  ctx.rotate(cubeRotY);
-  ctx.rotate(cubeRotX);
-  drawCube(1 + Math.sin(t)*0.2);
-  ctx.restore();
-
-  updateParticles();
-  requestAnimationFrame(loop);
-}
-loop();
-
-// ----------------- GUI PANEL -----------------
-document.getElementById("timeBtn").onclick = ()=>{
-  retro = !retro;
-  document.documentElement.classList.toggle("retro", retro);
-};
-document.getElementById("particleBtn").onclick = e=>{
-  particlesEnabled = !particlesEnabled;
-  e.target.textContent = "Particles: "+(particlesEnabled?"ON":"OFF");
-};
-document.getElementById("cubeModeBtn").onclick = e=>{
-  if(cubeMode==="smooth") cubeMode="lowpoly";
-  else if(cubeMode==="lowpoly") cubeMode="pixelated";
-  else cubeMode="smooth";
-  e.target.textContent = "Cube: "+cubeMode.charAt(0).toUpperCase()+cubeMode.slice(1);
-};
-document.getElementById("resetCubeBtn").onclick = ()=>{
-  cubeRotX = 0;
-  cubeRotY = 0;
-};
-
-// ----------------- MOUSE PARTICLE SPAWN -----------------
-document.addEventListener("mousemove", e=>spawnParticle(e.clientX, e.clientY));
+document.addEventListener("mousemove", e=>spawnParticle(e.clientX,e.clientY));
 document.addEventListener("touchmove", e=>{
   const t = e.touches[0];
-  spawnParticle(t.clientX, t.clientY);
-}, {passive:false});
-</script>
+  spawnParticle(t.clientX,t.clientY);
+},{passive:false});
 
+// ----------------- RAW WEBGL SETUP -----------------
+const canvas = document.getElementById("engineCanvas");
+const gl = canvas.getContext("webgl");
+let cw=canvas.clientWidth;
+let ch=canvas.clientHeight;
+function resizeCanvas(){
+  cw=canvas.clientWidth;
+  ch=canvas.clientHeight;
+  canvas.width=cw;
+  canvas.height=ch;
+  gl.viewport(0,0,cw,ch);
+}
+resizeCanvas();
+window.addEventListener("resize",resizeCanvas);
+
+// ----------------- SHADERS -----------------
+const vertexShaderSrc = `
+attribute vec3 position;
+uniform mat4 uModel;
+uniform mat4 uView;
+uniform mat4 uProjection;
+void main(){
+  gl_Position=uProjection*uView*uModel*vec4(position,1.0);
+}`;
+const fragmentShaderSrc = `
+precision mediump float;
+uniform vec3 uColor;
+void main(){
+  gl_FragColor=vec4(uColor,1.0);
+}`;
+function compileShader(src,type){
+  const s=gl.createShader(type);
+  gl.shaderSource(s,src);
+  gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+  return s;
+}
+const vertShader=compileShader(vertexShaderSrc,gl.VERTEX_SHADER);
+const fragShader=compileShader(fragmentShaderSrc,gl.FRAGMENT_SHADER);
+const program=gl.createProgram();
+gl.attachShader(program,vertShader);
+gl.attachShader(program,fragShader);
+gl.linkProgram(program);
+gl.useProgram(program);
+
+// ----------------- 3D CUBE DATA -----------------
+const cubeVertices=new Float32Array([
+  -1,-1,-1, 1,-1,-1, 1,1,-1, -1,1,-1,
+  -1,-1,1, 1,-1,1, 1,1,1, -1,1,1
+]);
+const cubeIndices=new Uint16Array([
+  0,1,1,2,2,3,3,0, 4,5,5,6,6,7,7,4,
+  0,4,1,5,2,6,3,7
+]);
+const vbo=gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertices);
+gl.bufferData(gl.ARRAY_BUFFER,cubeVertices,gl.STATIC_DRAW);
+const ibo=gl.createBuffer();
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeIndices);
+gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,cubeIndices,gl.STATIC_DRAW);
+const posAttrib=gl.getAttribLocation(program,"position");
+gl.enableVertexAttribArray(posAttrib);
+gl.vertexAttribPointer(posAttrib,3,gl.FLOAT,false,0,0);
+
+// ----------------- UNIFORMS -----------------
+const uModelLoc=gl.getUniformLocation(program,"uModel");
+const uViewLoc=gl.getUniformLocation(program,"uView");
+const uProjLoc=gl.getUniformLocation(program,"uProjection");
+const uColorLoc=gl.getUniformLocation(program,"uColor");
+
+// ----------------- BASIC MATRIX HELPERS -----------------
+function perspective(fov,aspect,near,far){
+  const f=1/Math.tan(fov/2);
+  const nf=1/(near-far);
+  return [
+    f/aspect,0,0,0,
+    0,f,0,0,
+    0,0,(far+near)*nf,-1,
+    0,0,2*far*near*nf,0
+  ];
+}
+function identity(){return [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];}
+function translate(m,v){
+  const t=identity();
+  t[12]=v[0]; t[13]=v[1]; t[14]=v[2];
+  return multiply(m,t);
+}
+function rotateY(m,a){
+  const r=identity();
+  r[0]=Math.cos(a); r[2]=Math.sin(a);
+  r[8]=-Math.sin(a); r[10]=Math.cos(a);
+  return multiply(m,r);
+}
+function rotateX(m,a){
+  const r=identity();
+  r[5]=Math.cos(a); r[6]=-Math.sin(a);
+  r[9]=Math.sin(a); r[10]=Math.cos(a);
+  return multiply(m,r);
+}
+function multiply(a,b){
+  const o=new Array(16).fill(0);
+  for(let i=0;i<4;i++)
+    for(let j=0;j<4;j++)
+      for(let k=0;k<4;k++)
+        o[i*4+j]+=a[i*4+k]*b[k*4+j];
+  return o;
+}
+
+// ----------------- CAMERA -----------------
+const cameraPos=[0,0,6];
+const viewMat=translate(identity(),[-cameraPos[0],-cameraPos[1],-cameraPos[2]]);
+const projMat=perspective(Math.PI/4,cw/ch,0.1,100);
+
+// ----------------- MULTIPLE CUBES -----------------
+let cubes=[
+  {pos:[-2,0,0],rot:[0,0,0],color:[1,0.3,0.3]},
+  {pos:[2,0,0],rot:[0,0,0],color:[0.3,1,0.3]},
+  {pos:[0,2,0],rot:[0,0,0],color:[0.3,0.3,1]}
+];
+
+// ----------------- DRAGGABLE WINDOWS -----------------
+let windows=[];
+for(let i=0;i<2;i++){
+  const w=document.createElement("div");
+  w.className="window";
+  w.style.width="200px"; w.style.height="100px";
+  w.style.left=(50+i*220)+"px"; w.style.top="50px";
+  w.innerHTML=`<h3>Window ${i+1}</h3><p>Drag me!</p>`;
+  document.body.appendChild(w);
+  windows.push({el:w,x:parseInt(w.style.left),y:parseInt(w.style.top),drag:false});
+}
+
+windows.forEach(win=>{
+  win.el.addEventListener("mousedown", e=>{win.drag=true;win.offsetX=e.offsetX;win.offsetY=e.offsetY;});
+  win.el.addEventListener("mouseup", e=>{win.drag=false;});
+  win.el.addEventListener("mousemove", e=>{
+    if(win.drag){
+      win.x=e.clientX-win.offsetX;
+      win.y=e.clientY-win.offsetY;
+      win.el.style.left=win.x+"px";
+      win.el.style.top=win.y+"px";
+    }
+  });
+});
+
+// ----------------- GUI -----------------
+document.getElementById("timeBtn").onclick=()=>{
+  document.documentElement.classList.toggle("retro");
+};
+document.getElementById("particleBtn").onclick=e=>{
+  particlesEnabled=!particlesEnabled;
+  e.target.textContent="Particles: "+(particlesEnabled?"ON":"OFF");
+};
+document.getElementById("resetCubeBtn").onclick=()=>{
+  cubes.forEach(c=>{c.rot=[0,0,0];});
+};
+
+// ----------------- RENDER LOOP -----------------
+let t=0;
+function render(){
+  t+=0.01;
+  gl.clearColor(0,0,0,1);
+  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST);
+
+  cubes.forEach(c=>{
+    c.rot[0]+=0.01; c.rot[1]+=0.02;
+    let model=identity();
+    model=translate(model,c.pos);
+    model=rotateX(model,c.rot[0]);
+    model=rotateY(model,c.rot[1]);
+    gl.uniformMatrix4fv(uModelLoc,false,new Float32Array(model));
+    gl.uniformMatrix4fv(uViewLoc,false,new Float32Array(viewMat));
+    gl.uniformMatrix4fv(uProjLoc,false,new Float32Array(projMat));
+    gl.uniform3fv(uColorLoc,new Float32Array(c.color));
+    gl.drawElements(gl.LINES,cubeIndices.length,gl.UNSIGNED_SHORT,0);
+  });
+
+  updateParticles();
+  requestAnimationFrame(render);
+}
+render();
+</script>
 </body>
 </html>
