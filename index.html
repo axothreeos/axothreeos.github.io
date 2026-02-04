@@ -2,186 +2,229 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>★ Welcome to My Homepage ★</title>
+  <title>♡ axo's cute homepage ♡</title>
 
   <style>
     body {
-      background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
-      background-color: #000033;
-      color: #ffffff;
+      background-color: #ffe6f2;
+      background-image:
+        url("https://www.transparenttextures.com/patterns/stardust.png");
+      color: #330033;
       font-family: "Comic Sans MS", "Comic Sans", cursive;
-      cursor: url("https://cur.cursors-4u.net/cursors/cur-2/cur116.cur"), auto;
     }
 
     a {
-      color: #00ffff;
+      color: #ff66cc;
+      font-weight: bold;
       text-decoration: none;
     }
 
     a:hover {
-      color: #ff66ff;
+      color: #990066;
       text-decoration: underline;
     }
 
-    .container {
+    .page {
       width: 760px;
-      margin: 0 auto;
-      border: 6px ridge #ff66ff;
-      background-color: #000066;
+      margin: 20px auto;
+      background-color: #fff0fa;
+      border: 6px ridge #ff99cc;
       padding: 10px;
     }
 
     .header {
       text-align: center;
-      background: linear-gradient(#ff00ff, #6600ff);
+      background: linear-gradient(#ffccff, #ff99cc);
+      border: 4px outset white;
       padding: 10px;
-      border: 4px outset #ffffff;
     }
 
-    .header h1 {
+    h1 {
       margin: 0;
-      font-size: 36px;
-      color: yellow;
-      text-shadow: 2px 2px #ff0000;
+      color: #ff3399;
+      text-shadow: 2px 2px white ուն
     }
 
-    .marquee {
-      background-color: black;
-      color: #00ff00;
-      border: 2px dashed #00ff00;
-      padding: 5px;
-      margin: 10px 0;
+    marquee {
+      color: #ff3399;
+      background: #fff;
+      border: 2px dotted #ff99cc;
+      padding: 4px;
+      margin-top: 8px;
     }
 
-    .content {
+    .layout {
       display: flex;
       gap: 10px;
+      margin-top: 10px;
     }
 
     .sidebar {
       width: 200px;
-      background-color: #330066;
-      border: 3px inset #ffccff;
+      background-color: #ffe0f0;
+      border: 3px inset #ffb6d9;
       padding: 8px;
       font-size: 14px;
     }
 
     .main {
       flex: 1;
-      background-color: #000099;
-      border: 3px inset #ffccff;
+      background-color: #fff5fb;
+      border: 3px inset #ffb6d9;
       padding: 10px;
     }
 
     .box {
-      border: 2px dotted #ffff00;
-      padding: 6px;
+      border: 2px dotted #ff66cc;
+      padding: 8px;
       margin-bottom: 10px;
-      background-color: #000033;
+      background-color: #ffffff;
     }
 
-    .footer {
-      text-align: center;
-      font-size: 12px;
-      margin-top: 10px;
-      color: #cccccc;
+    .counter {
+      font-family: monospace;
+      background: #fff;
+      color: #ff3399;
+      padding: 4px;
+      border: 1px solid #ff99cc;
+      display: inline-block;
     }
 
     blink {
-      animation: blink 1s steps(1, start) infinite;
+      animation: blink 1s steps(1) infinite;
     }
 
     @keyframes blink {
       50% { visibility: hidden; }
     }
 
-    .counter {
-      font-family: monospace;
-      background-color: black;
-      color: #00ff00;
-      padding: 4px;
-      display: inline-block;
-      border: 1px solid #00ff00;
+    .heart {
+      position: fixed;
+      top: -20px;
+      font-size: 16px;
+      color: #ff66cc;
+      animation: fall 8s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes fall {
+      from { transform: translateY(0); }
+      to { transform: translateY(110vh); }
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #996699;
+      margin-top: 10px;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="container">
+<!-- MIDI MUSIC -->
+<audio autoplay loop>
+  <source src="https://files.catbox.moe/7xjv0k.mid" type="audio/midi">
+</audio>
 
-    <div class="header">
-      <h1>★ MY AWESOME HOMEPAGE ★</h1>
-      <div class="marquee">
-        <marquee behavior="scroll" direction="left">
-          welcome to my website!!! thanks for stopping by!!! dont forget to sign my guestbook!!!
-        </marquee>
+<div class="page">
+
+  <div class="header">
+    <h1>♡ axo's homepage ♡</h1>
+    <marquee>
+      welcome to my cute little website!!! please enjoy your stay!!!
+    </marquee>
+  </div>
+
+  <div class="layout">
+
+    <div class="sidebar">
+      <div class="box">
+        <b>navigation</b><br><br>
+        ♡ <a href="#home">home</a><br>
+        ♡ <a href="#about">about me</a><br>
+        ♡ <a href="#updates">updates</a><br>
+        ♡ <a href="#links">links</a>
+      </div>
+
+      <div class="box">
+        <b>status</b><br>
+        <blink>ONLINE</blink><br><br>
+        mood: happy<br>
+        music: midi<br>
+        vibe: pastel
+      </div>
+
+      <div class="box">
+        <b>buttons</b><br><br>
+        <img src="https://cyber.dabamos.de/88x31/neocities.gif"><br>
+        <img src="https://cyber.dabamos.de/88x31/pink.gif">
       </div>
     </div>
 
-    <div class="content">
+    <div class="main" id="home">
 
-      <div class="sidebar">
-        <div class="box">
-          <b>Navigation</b><br>
-          ★ <a href="#">Home</a><br>
-          ★ <a href="#">About Me</a><br>
-          ★ <a href="#">My Art</a><br>
-          ★ <a href="#">Links</a><br>
-          ★ <a href="#">Guestbook</a>
-        </div>
-
-        <div class="box">
-          <b>Status</b><br>
-          <blink>ONLINE</blink><br><br>
-          Mood: hyper<br>
-          Music: chiptune<br>
-          Drink: soda
-        </div>
-
-        <div class="box">
-          <b>Cool Buttons</b><br><br>
-          <img src="https://cyber.dabamos.de/88x31/anythingbut.gif" alt="button"><br>
-          <img src="https://cyber.dabamos.de/88x31/notepad.gif" alt="button"><br>
-          <img src="https://cyber.dabamos.de/88x31/html_learn_it_today.gif" alt="button">
-        </div>
+      <div class="box">
+        <h2>hello!!!</h2>
+        <p>
+          hi im axo and this is my cute little homepage.
+          i made this because the modern web is boring and this is more fun ♡
+        </p>
       </div>
 
-      <div class="main">
-        <div class="box">
-          <h2>Welcome!!!</h2>
-          <p>
-            hi!!! this is my personal homepage on the world wide web!!!
-            i made this site by hand using pure html just like the old days.
-          </p>
-          <p>
-            feel free to click around and explore. this site is best viewed
-            at 800x600 on a crt monitor 😎
-          </p>
-        </div>
-
-        <div class="box">
-          <h2>Updates</h2>
-          <ul>
-            <li>02/03/2001 added new background</li>
-            <li>01/28/2001 site launched!!!</li>
-            <li>01/15/2001 learned html</li>
-          </ul>
-        </div>
-
-        <div class="box">
-          <h2>Visitor Counter</h2>
-          <div class="counter">00001337</div>
-        </div>
+      <div class="box" id="about">
+        <h2>about me</h2>
+        <p>
+          i like making games, engines, and weird retro stuff.
+          this site is hand coded just for fun!!!
+        </p>
       </div>
 
-    </div>
+      <div class="box" id="updates">
+        <h2>updates</h2>
+        <ul>
+          <li>02/04/2026 made this site cute</li>
+          <li>02/03/2026 learned html again</li>
+          <li>02/02/2026 discovered neocities</li>
+        </ul>
+      </div>
 
-    <div class="footer">
-      © 2001 Me | hosted on geocities | best viewed in netscape
+      <div class="box" id="links">
+        <h2>cool links</h2>
+        <ul>
+          <li><a href="https://neocities.org" target="_blank">neocities</a></li>
+          <li><a href="https://github.com" target="_blank">github</a></li>
+          <li><a href="#">my projects</a></li>
+        </ul>
+      </div>
+
+      <div class="box">
+        <h2>visitor counter</h2>
+        <div class="counter">00000123</div>
+      </div>
+
     </div>
 
   </div>
+
+  <footer>
+    made with love ♡ pure html ♡ hosted on github pages
+  </footer>
+
+</div>
+
+<!-- floating hearts -->
+<script>
+  for (let i = 0; i < 15; i++) {
+    const heart = document.createElement("div");
+    heart.className = "heart";
+    heart.textContent = "♡";
+    heart.style.left = Math.random() * 100 + "vw";
+    heart.style.animationDelay = Math.random() * 8 + "s";
+    document.body.appendChild(heart);
+  }
+</script>
 
 </body>
 </html>
