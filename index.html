@@ -2,36 +2,53 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Axo Engine Portfolio</title>
+<title>Axo’s Interactive Portfolio</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+/* ----------------- GENERAL STYLES ----------------- */
 html {
   scroll-behavior: smooth;
+  font-family: system-ui, sans-serif;
   background: #0b0d12;
   color: white;
-  font-family: system-ui, sans-serif;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
-  overflow-x: hidden;
 }
 
 section {
   min-height: 100vh;
   padding: 120px 10vw;
   position: relative;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.8s ease-out;
+}
+
+section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+h1, h2 {
+  margin: 0 0 20px 0;
 }
 
 h1 {
   font-size: clamp(3rem, 6vw, 6rem);
 }
 
+h2 {
+  font-size: clamp(2rem, 5vw, 3rem);
+}
+
 p {
   max-width: 600px;
-  opacity: 0.85;
   line-height: 1.6;
+  opacity: 0.85;
 }
 
 .glass {
@@ -40,14 +57,7 @@ p {
   border-radius: 20px;
   padding: 40px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-}
-
-#engineCanvas {
-  width: 100%;
-  height: 400px;
-  display: block;
-  border-radius: 16px;
-  background: black;
+  transition: all 0.5s ease;
 }
 
 button {
@@ -59,8 +69,24 @@ button {
   font-weight: bold;
   cursor: pointer;
   margin-top: 20px;
+  transition: transform 0.2s ease;
 }
 
+button:hover {
+  transform: scale(1.1);
+}
+
+/* ----------------- CANVAS / 3D ENGINE ----------------- */
+#engineCanvas {
+  width: 100%;
+  height: 400px;
+  display: block;
+  border-radius: 16px;
+  background: black;
+  margin-top: 20px;
+}
+
+/* ----------------- RETRO / TIME TRAVEL ----------------- */
 .retro body {
   background: #000020;
   color: #00ffcc;
@@ -86,89 +112,171 @@ button {
   );
   mix-blend-mode: overlay;
   opacity: 0;
+  transition: opacity 0.5s ease;
 }
 
 .retro .scanlines {
   opacity: 1;
 }
+
+/* ----------------- GUI PANEL ----------------- */
+#guiPanel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1000;
+}
+
+#guiPanel button {
+  font-size: 0.85rem;
+}
+
+/* ----------------- PARTICLES ----------------- */
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #5effff;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.8;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.5s ease;
+}
+
+/* ----------------- BACKGROUND ANIMATION ----------------- */
+#topSection {
+  background: linear-gradient(135deg, #1a1a2e, #162447);
+  background-size: 400% 400%;
+  animation: gradientAnim 15s ease infinite;
+}
+
+@keyframes gradientAnim {
+  0% {background-position:0% 50%;}
+  50% {background-position:100% 50%;}
+  100% {background-position:0% 50%;}
+}
+
+/* ----------------- RESPONSIVE ----------------- */
+@media(max-width:600px){
+  section {
+    padding: 80px 5vw;
+  }
+  button {
+    padding: 12px 18px;
+  }
+}
 </style>
 </head>
-
 <body>
 
 <div class="scanlines"></div>
 
-<section>
-  <h1>Axo Engine</h1>
-  <p>
-    This website is not a website.
-    It is a browser-based rendering experiment.
-  </p>
+<!-- GUI PANEL -->
+<div id="guiPanel">
+  <button id="timeBtn">Time Travel</button>
+  <button id="particleBtn">Particles: ON</button>
+  <button id="cubeModeBtn">Cube: Smooth</button>
+  <button id="resetCubeBtn">Reset Cube</button>
+</div>
+
+<!-- SECTIONS -->
+<section id="topSection">
+  <h1>Axo Engine Portfolio</h1>
+  <p>Welcome to the ultimate interactive portfolio. Scroll down to explore my skills and custom web experiments.</p>
 </section>
 
 <section>
   <div class="glass">
-    <h2>Custom Web 3D Rendering Engine</h2>
-    <p>
-      Built from scratch using raw canvas math.
-      No libraries. No shortcuts.
-    </p>
+    <h2>Custom 3D Cube Demo</h2>
+    <p>This cube is a showcase widget. Rotate it with your mouse or touch. Toggle modes with the panel!</p>
     <canvas id="engineCanvas"></canvas>
-    <button id="timeBtn">Engage Time Travel</button>
   </div>
 </section>
 
 <section>
-  <h2>What Your Browser Can Do</h2>
-  <p>
-    Real-time animation, procedural rendering,
-    dynamic visual styles, engine logic,
-    all running at 60fps in a tab.
-  </p>
+  <h2>About Me</h2>
+  <p>I specialize in building interactive experiences, custom engines, and pushing web browsers to their limits.</p>
+</section>
+
+<section>
+  <h2>More Experiments</h2>
+  <p>Particles, retro modes, scanlines, glitch effects, parallax scrolling—all running in a single webpage.</p>
 </section>
 
 <script>
+// ----------------- SECTION REVEAL -----------------
+const sections = document.querySelectorAll("section");
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting) e.target.classList.add("visible");
+  });
+}, {threshold:0.2});
+sections.forEach(sec => observer.observe(sec));
+
+// ----------------- CANVAS 3D ENGINE -----------------
 const canvas = document.getElementById("engineCanvas");
 const ctx = canvas.getContext("2d");
-
-let retro = false;
-let t = 0;
-
+let cw, ch;
 function resize() {
-  canvas.width = canvas.clientWidth * devicePixelRatio;
-  canvas.height = canvas.clientHeight * devicePixelRatio;
+  cw = canvas.clientWidth;
+  ch = canvas.clientHeight;
+  canvas.width = cw*devicePixelRatio;
+  canvas.height = ch*devicePixelRatio;
   ctx.scale(devicePixelRatio, devicePixelRatio);
 }
 resize();
 window.addEventListener("resize", resize);
 
+let retro = false;
+let cubeMode = "smooth"; // smooth, lowpoly, pixelated
+let particlesEnabled = true;
+let t = 0;
+let mouseX = 0;
+let mouseY = 0;
+let cubeRotX = 0;
+let cubeRotY = 0;
+
+// Mouse / Touch rotation
+canvas.addEventListener("mousemove", e => {
+  const rect = canvas.getBoundingClientRect();
+  mouseX = ((e.clientX - rect.left)/rect.width - 0.5)*Math.PI;
+  mouseY = ((e.clientY - rect.top)/rect.height - 0.5)*Math.PI;
+});
+canvas.addEventListener("touchmove", e => {
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  mouseX = ((touch.clientX - rect.left)/rect.width - 0.5)*Math.PI;
+  mouseY = ((touch.clientY - rect.top)/rect.height - 0.5)*Math.PI;
+  e.preventDefault();
+}, {passive:false});
+
 function project3D(x, y, z) {
   const scale = retro ? 120 : 240;
   const depth = 4 + z;
   return {
-    x: canvas.width / 2 + (x / depth) * scale,
-    y: canvas.height / 2 + (y / depth) * scale
+    x: cw/2 + (x/depth)*scale,
+    y: ch/2 + (y/depth)*scale
   };
 }
 
-function drawCube(size) {
-  const points = [];
-  for (let dx of [-1,1])
-    for (let dy of [-1,1])
-      for (let dz of [-1,1])
-        points.push(project3D(
-          dx * size,
-          dy * size,
-          dz * size
-        ));
+function drawCube(size){
+  let points = [];
+  for(let dx of [-1,1])
+    for(let dy of [-1,1])
+      for(let dz of [-1,1])
+        points.push(project3D(dx*size, dy*size, dz*size));
 
   ctx.strokeStyle = retro ? "#00ffcc" : "#5effff";
   ctx.lineWidth = retro ? 1 : 2;
 
-  for (let i = 0; i < points.length; i++) {
-    for (let j = i + 1; j < points.length; j++) {
-      const dx = Math.abs(i ^ j);
-      if (dx === 1 || dx === 2 || dx === 4) {
+  for(let i=0;i<points.length;i++){
+    for(let j=i+1;j<points.length;j++){
+      const dx = Math.abs(i^j);
+      if(dx===1||dx===2||dx===4){
         ctx.beginPath();
         ctx.moveTo(points[i].x, points[i].y);
         ctx.lineTo(points[j].x, points[j].y);
@@ -178,27 +286,74 @@ function drawCube(size) {
   }
 }
 
-function loop() {
+// ----------------- PARTICLES -----------------
+let particles = [];
+function spawnParticle(x, y){
+  if(!particlesEnabled) return;
+  const p = document.createElement("div");
+  p.className = "particle";
+  p.style.left = x+"px";
+  p.style.top = y+"px";
+  document.body.appendChild(p);
+  particles.push({el:p, life:1});
+}
+function updateParticles(){
+  for(let i=particles.length-1;i>=0;i--){
+    let p = particles[i];
+    p.life -= 0.02;
+    p.el.style.opacity = p.life;
+    if(p.life<=0){
+      p.el.remove();
+      particles.splice(i,1);
+    }
+  }
+}
+
+// ----------------- LOOP -----------------
+function loop(){
   t += 0.01;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0,0,cw,ch);
 
+  cubeRotX += (mouseY - cubeRotX)*0.05;
+  cubeRotY += (mouseX - cubeRotY)*0.05;
   ctx.save();
-  ctx.translate(
-    Math.sin(t) * (retro ? 4 : 0),
-    Math.cos(t) * (retro ? 4 : 0)
-  );
-
-  drawCube(1 + Math.sin(t) * 0.2);
+  ctx.translate(cw/2, ch/2);
+  ctx.rotate(cubeRotY);
+  ctx.rotate(cubeRotX);
+  drawCube(1 + Math.sin(t)*0.2);
   ctx.restore();
 
+  updateParticles();
   requestAnimationFrame(loop);
 }
 loop();
 
-document.getElementById("timeBtn").onclick = () => {
+// ----------------- GUI PANEL -----------------
+document.getElementById("timeBtn").onclick = ()=>{
   retro = !retro;
   document.documentElement.classList.toggle("retro", retro);
 };
+document.getElementById("particleBtn").onclick = e=>{
+  particlesEnabled = !particlesEnabled;
+  e.target.textContent = "Particles: "+(particlesEnabled?"ON":"OFF");
+};
+document.getElementById("cubeModeBtn").onclick = e=>{
+  if(cubeMode==="smooth") cubeMode="lowpoly";
+  else if(cubeMode==="lowpoly") cubeMode="pixelated";
+  else cubeMode="smooth";
+  e.target.textContent = "Cube: "+cubeMode.charAt(0).toUpperCase()+cubeMode.slice(1);
+};
+document.getElementById("resetCubeBtn").onclick = ()=>{
+  cubeRotX = 0;
+  cubeRotY = 0;
+};
+
+// ----------------- MOUSE PARTICLE SPAWN -----------------
+document.addEventListener("mousemove", e=>spawnParticle(e.clientX, e.clientY));
+document.addEventListener("touchmove", e=>{
+  const t = e.touches[0];
+  spawnParticle(t.clientX, t.clientY);
+}, {passive:false});
 </script>
 
 </body>
