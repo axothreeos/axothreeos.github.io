@@ -1,406 +1,1230 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Axo Engine Portfolio 2.0</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CGI Studio Pro</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<style>
-html, body {
-  margin: 0;
-  height: 100%;
-  overflow-x: hidden;
-  font-family: system-ui, sans-serif;
-  background: #0b0d12;
-  color: white;
-  scroll-behavior: smooth;
-}
-section {
-  min-height: 100vh;
-  padding: 120px 10vw;
-  opacity: 0;
-  transform: translateY(40px);
-  transition: all 0.8s ease-out;
-}
-section.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-h1, h2 {
-  margin: 0 0 20px 0;
-}
-h1 { font-size: clamp(3rem, 6vw, 6rem);}
-h2 { font-size: clamp(2rem, 5vw, 3rem);}
-p {
-  max-width: 600px;
-  line-height: 1.6;
-  opacity: 0.85;
-}
-.glass {
-  backdrop-filter: blur(20px);
-  background: rgba(255,255,255,0.08);
-  border-radius: 20px;
-  padding: 40px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-  transition: all 0.5s ease;
-  position: relative;
-}
+        :root {
+            --primary: #00ff88;
+            --primary-dark: #00cc6a;
+            --secondary: #ff0080;
+            --bg-dark: #0a0a0f;
+            --bg-medium: #1a1a24;
+            --bg-light: #2a2a38;
+            --text: #ffffff;
+            --text-dim: #a0a0b0;
+            --border: #3a3a48;
+            --glow: rgba(0, 255, 136, 0.3);
+        }
 
-/* GUI PANEL */
-#guiPanel {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 1000;
-}
-#guiPanel button {
-  font-size: 0.85rem;
-  padding: 12px 18px;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  background: linear-gradient(135deg,#5effff,#8a5eff);
-  color: black;
-  font-weight: bold;
-  transition: all 0.2s ease;
-}
-#guiPanel button:hover {
-  transform: scale(1.1);
-}
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            overflow: hidden;
+            touch-action: none;
+        }
 
-/* CANVAS */
-#engineCanvas {
-  width: 100%;
-  height: 500px;
-  display: block;
-  border-radius: 16px;
-  background: black;
-  margin-top: 20px;
-}
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 0, 128, 0.1) 0%, transparent 50%);
+            animation: bgPulse 10s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
 
-/* PARTICLES */
-.particle {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #5effff;
-  pointer-events: none;
-  opacity: 0.8;
-  transform: translate(-50%, -50%);
-  transition: opacity 0.5s ease;
-}
+        @keyframes bgPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
 
-/* RETRO MODE */
-.retro body {
-  background: #000020;
-  color: #00ffcc;
-  font-family: "Courier New", monospace;
-}
-.retro .glass {
-  background: rgba(0,0,0,0.8);
-  border: 2px solid #00ffcc;
-  box-shadow: none;
-}
-.scanlines {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.03),
-    rgba(255,255,255,0.03) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-  mix-blend-mode: overlay;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-}
-.retro .scanlines {opacity:1;}
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
 
-/* DRAGGABLE WINDOWS */
-.window {
-  position: absolute;
-  background: rgba(20,20,30,0.9);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-  cursor: grab;
-  overflow: hidden;
-  touch-action: none;
-  transition: box-shadow 0.2s ease;
-}
-.window:active {
-  cursor: grabbing;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.8);
-}
-.window h3 {
-  margin: 0 0 6px 0;
-  font-size: 1.1rem;
-}
-.window p {
-  margin: 0;
-  font-size: 0.9rem;
-}
-</style>
+        /* Header */
+        header {
+            background: var(--bg-medium);
+            border-bottom: 2px solid var(--primary);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px var(--glow);
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px var(--glow);
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .mode-btn {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .mode-btn:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary);
+            color: var(--bg-dark);
+            box-shadow: 0 0 15px var(--glow);
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--bg-dark);
+            font-weight: 700;
+        }
+
+        /* Main workspace */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-medium);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .tool-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-section h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .tool-btn, .upload-btn {
+            width: 100%;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.7rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .tool-btn:hover, .upload-btn:hover {
+            background: var(--bg-dark);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .slider-control {
+            margin-bottom: 1rem;
+        }
+
+        .slider-control label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 0.3rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: var(--bg-light);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--glow);
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-light);
+            cursor: pointer;
+        }
+
+        /* Canvas area */
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--bg-dark);
+        }
+
+        .canvas-toolbar {
+            background: var(--bg-medium);
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #mainCanvas, #preview3D {
+            max-width: 100%;
+            max-height: 100%;
+            border: 1px solid var(--border);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        #preview3D {
+            display: none;
+        }
+
+        /* Properties panel */
+        .properties {
+            width: 260px;
+            background: var(--bg-medium);
+            border-left: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        /* Status bar */
+        .status-bar {
+            background: var(--bg-medium);
+            border-top: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--bg-medium);
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 0 50px var(--glow);
+        }
+
+        .modal-content h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .close-modal {
+            float: right;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-dim);
+        }
+
+        .close-modal:hover {
+            color: var(--secondary);
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid var(--bg-light);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .sidebar, .properties {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                bottom: 0;
+                z-index: 100;
+                transition: left 0.3s;
+                width: 80%;
+                max-width: 280px;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .properties {
+                left: auto;
+                right: -100%;
+            }
+
+            .properties.open {
+                right: 0;
+            }
+
+            .mobile-toggle {
+                display: block;
+                background: var(--bg-light);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 0.5rem 1rem;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+            .mode-selector {
+                flex-wrap: wrap;
+            }
+
+            .mode-btn {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-toggle {
+                display: none;
+            }
+        }
+
+        /* Checkbox styling */
+        .checkbox-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+        }
+
+        .param-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .param-input {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        /* Neural network controls */
+        .nn-control {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .nn-control h4 {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .process-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            color: var(--bg-dark);
+            padding: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+
+        .process-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--glow);
+        }
+
+        .process-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
 </head>
-
 <body>
-<div class="scanlines"></div>
+    <div class="container">
+        <header>
+            <div class="logo">CGI STUDIO PRO</div>
+            <div class="mode-selector">
+                <button class="mode-btn active" data-mode="editor">2D Editor</button>
+                <button class="mode-btn" data-mode="3d">3D Modeling</button>
+                <button class="mode-btn" data-mode="chroma">Chroma Key</button>
+                <button class="mode-btn" data-mode="relight">Relight</button>
+                <button class="mode-btn mobile-toggle" onclick="toggleSidebar()">☰</button>
+            </div>
+        </header>
 
-<!-- GUI PANEL -->
-<div id="guiPanel">
-  <button id="timeBtn">Time Travel</button>
-  <button id="particleBtn">Particles: ON</button>
-  <button id="resetCubeBtn">Reset Cubes</button>
-</div>
+        <div class="workspace">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="tool-section">
+                    <h3>Media Import</h3>
+                    <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none;">
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                        📁 Load Photos/Videos
+                    </button>
+                </div>
 
-<!-- SECTIONS -->
-<section>
-  <h1>Axo Engine Portfolio</h1>
-  <p>Welcome! Scroll down to explore interactive 3D demos, physics windows, and cutting-edge web experiences.</p>
-</section>
+                <div class="tool-section" id="editorTools">
+                    <h3>Effects</h3>
+                    <button class="tool-btn" onclick="applyEffect('blur')">Blur</button>
+                    <button class="tool-btn" onclick="applyEffect('sharpen')">Sharpen</button>
+                    <button class="tool-btn" onclick="applyEffect('edge')">Edge Detection</button>
+                    <button class="tool-btn" onclick="applyEffect('emboss')">Emboss</button>
+                    <button class="tool-btn" onclick="applyEffect('vintage')">Vintage</button>
+                    <button class="tool-btn" onclick="applyEffect('noir')">Film Noir</button>
+                </div>
 
-<section>
-  <div class="glass">
-    <h2>Interactive 3D Engine Demo</h2>
-    <p>Multiple 3D objects rendered using raw WebGL. Drag windows, toggle modes, and explore physics interactions!</p>
-    <canvas id="engineCanvas"></canvas>
-  </div>
-</section>
+                <div class="tool-section" id="chromaTools" style="display:none;">
+                    <h3>Chroma Key</h3>
+                    <div class="slider-control">
+                        <label>Key Color:</label>
+                        <input type="color" id="keyColor" value="#00ff00">
+                    </div>
+                    <div class="slider-control">
+                        <label>Threshold: <span id="thresholdVal">30</span></label>
+                        <input type="range" id="threshold" min="0" max="100" value="30" 
+                               oninput="document.getElementById('thresholdVal').textContent=this.value">
+                    </div>
+                    <div class="slider-control">
+                        <label>Smoothness: <span id="smoothVal">5</span></label>
+                        <input type="range" id="smoothness" min="0" max="20" value="5"
+                               oninput="document.getElementById('smoothVal').textContent=this.value">
+                    </div>
+                    <button class="process-btn" onclick="applyChromaKey()">Apply Chroma Key</button>
+                </div>
 
-<section>
-  <h2>Draggable Windows</h2>
-  <p>These panels are physics-driven and draggable. You can move them anywhere on the page.</p>
-</section>
+                <div class="tool-section" id="threeDTools" style="display:none;">
+                    <h3>3D Primitives</h3>
+                    <button class="tool-btn" onclick="add3DShape('cube')">Add Cube</button>
+                    <button class="tool-btn" onclick="add3DShape('sphere')">Add Sphere</button>
+                    <button class="tool-btn" onclick="add3DShape('cylinder')">Add Cylinder</button>
+                    <button class="tool-btn" onclick="add3DShape('cone')">Add Cone</button>
+                    <button class="tool-btn" onclick="add3DShape('torus')">Add Torus</button>
+                    
+                    <h3 style="margin-top:1rem;">Lighting</h3>
+                    <div class="checkbox-control">
+                        <input type="checkbox" id="enableRayTrace" onchange="toggleRayTrace()">
+                        <label>Ray Tracing</label>
+                    </div>
+                    <button class="tool-btn" onclick="add3DLight('point')">Add Point Light</button>
+                    <button class="tool-btn" onclick="add3DLight('directional')">Add Directional</button>
+                </div>
 
-<section>
-  <h2>About Me</h2>
-  <p>I specialize in pushing the web to its limits: real-time 3D, physics, particles, and interactive experiences.</p>
-</section>
+                <div class="tool-section" id="relightTools" style="display:none;">
+                    <h3>Scene Relighting</h3>
+                    <div class="slider-control">
+                        <label>Light X: <span id="lightXVal">0</span></label>
+                        <input type="range" id="lightX" min="-100" max="100" value="0"
+                               oninput="document.getElementById('lightXVal').textContent=this.value; updateRelight()">
+                    </div>
+                    <div class="slider-control">
+                        <label>Light Y: <span id="lightYVal">-50</span></label>
+                        <input type="range" id="lightY" min="-100" max="100" value="-50"
+                               oninput="document.getElementById('lightYVal').textContent=this.value; updateRelight()">
+                    </div>
+                    <div class="slider-control">
+                        <label>Intensity: <span id="intensityVal">50</span></label>
+                        <input type="range" id="intensity" min="0" max="100" value="50"
+                               oninput="document.getElementById('intensityVal').textContent=this.value; updateRelight()">
+                    </div>
+                    <div class="slider-control">
+                        <label>Light Color:</label>
+                        <input type="color" id="lightColor" value="#ffffff" onchange="updateRelight()">
+                    </div>
+                    <button class="process-btn" onclick="applyRelight()">Apply Relighting</button>
+                </div>
+            </aside>
 
-<script>
-// ----------------- SECTION REVEAL -----------------
-const sections = document.querySelectorAll("section");
-const observer = new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting) e.target.classList.add("visible");
-  });
-},{threshold:0.2});
-sections.forEach(sec=>observer.observe(sec));
+            <!-- Canvas Area -->
+            <div class="canvas-area">
+                <div class="canvas-toolbar">
+                    <button class="tool-btn" onclick="resetCanvas()">🔄 Reset</button>
+                    <button class="tool-btn" onclick="downloadCanvas()">💾 Export</button>
+                    <button class="tool-btn" onclick="undoLast()">↶ Undo</button>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="mainCanvas" width="800" height="600"></canvas>
+                    <canvas id="preview3D" width="800" height="600"></canvas>
+                </div>
+            </div>
 
-// ----------------- PARTICLES -----------------
-let particlesEnabled = true;
-let particles = [];
-function spawnParticle(x,y){
-  if(!particlesEnabled) return;
-  const p = document.createElement("div");
-  p.className="particle";
-  p.style.left=x+"px";
-  p.style.top=y+"px";
-  document.body.appendChild(p);
-  particles.push({el:p,life:1});
-}
-function updateParticles(){
-  for(let i=particles.length-1;i>=0;i--){
-    let p=particles[i];
-    p.life-=0.02;
-    p.el.style.opacity=p.life;
-    if(p.life<=0){p.el.remove();particles.splice(i,1);}
-  }
-}
-document.addEventListener("mousemove", e=>spawnParticle(e.clientX,e.clientY));
-document.addEventListener("touchmove", e=>{
-  const t = e.touches[0];
-  spawnParticle(t.clientX,t.clientY);
-},{passive:false});
+            <!-- Properties Panel -->
+            <aside class="properties" id="properties">
+                <div class="tool-section">
+                    <h3>Color Adjustments</h3>
+                    <div class="slider-control">
+                        <label>Brightness: <span id="brightnessVal">0</span></label>
+                        <input type="range" id="brightness" min="-100" max="100" value="0"
+                               oninput="document.getElementById('brightnessVal').textContent=this.value; applyAdjustments()">
+                    </div>
+                    <div class="slider-control">
+                        <label>Contrast: <span id="contrastVal">0</span></label>
+                        <input type="range" id="contrast" min="-100" max="100" value="0"
+                               oninput="document.getElementById('contrastVal').textContent=this.value; applyAdjustments()">
+                    </div>
+                    <div class="slider-control">
+                        <label>Saturation: <span id="saturationVal">0</span></label>
+                        <input type="range" id="saturation" min="-100" max="100" value="0"
+                               oninput="document.getElementById('saturationVal').textContent=this.value; applyAdjustments()">
+                    </div>
+                    <div class="slider-control">
+                        <label>Hue: <span id="hueVal">0</span></label>
+                        <input type="range" id="hue" min="-180" max="180" value="0"
+                               oninput="document.getElementById('hueVal').textContent=this.value; applyAdjustments()">
+                    </div>
+                </div>
 
-// ----------------- RAW WEBGL SETUP -----------------
-const canvas = document.getElementById("engineCanvas");
-const gl = canvas.getContext("webgl");
-let cw=canvas.clientWidth;
-let ch=canvas.clientHeight;
-function resizeCanvas(){
-  cw=canvas.clientWidth;
-  ch=canvas.clientHeight;
-  canvas.width=cw;
-  canvas.height=ch;
-  gl.viewport(0,0,cw,ch);
-}
-resizeCanvas();
-window.addEventListener("resize",resizeCanvas);
+                <div class="tool-section">
+                    <h3>AI Processing</h3>
+                    <div class="nn-control">
+                        <h4>Style Transfer</h4>
+                        <button class="tool-btn" onclick="applyNeuralStyle('impressionist')">Impressionist</button>
+                        <button class="tool-btn" onclick="applyNeuralStyle('abstract')">Abstract</button>
+                        <button class="tool-btn" onclick="applyNeuralStyle('sketch')">Sketch</button>
+                    </div>
+                    <div class="nn-control">
+                        <h4>Enhancement</h4>
+                        <button class="tool-btn" onclick="applyAI('denoise')">AI Denoise</button>
+                        <button class="tool-btn" onclick="applyAI('upscale')">AI Upscale 2x</button>
+                        <button class="tool-btn" onclick="applyAI('superres')">Super Resolution</button>
+                    </div>
+                    <div class="nn-control">
+                        <h4>Generation</h4>
+                        <button class="tool-btn" onclick="applyAI('inpaint')">AI Inpaint</button>
+                        <button class="tool-btn" onclick="applyAI('background')">Remove Background</button>
+                    </div>
+                </div>
+            </aside>
+        </div>
 
-// ----------------- SHADERS -----------------
-const vertexShaderSrc = `
-attribute vec3 position;
-uniform mat4 uModel;
-uniform mat4 uView;
-uniform mat4 uProjection;
-void main(){
-  gl_Position=uProjection*uView*uModel*vec4(position,1.0);
-}`;
-const fragmentShaderSrc = `
-precision mediump float;
-uniform vec3 uColor;
-void main(){
-  gl_FragColor=vec4(uColor,1.0);
-}`;
-function compileShader(src,type){
-  const s=gl.createShader(type);
-  gl.shaderSource(s,src);
-  gl.compileShader(s);
-  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
-  return s;
-}
-const vertShader=compileShader(vertexShaderSrc,gl.VERTEX_SHADER);
-const fragShader=compileShader(fragmentShaderSrc,gl.FRAGMENT_SHADER);
-const program=gl.createProgram();
-gl.attachShader(program,vertShader);
-gl.attachShader(program,fragShader);
-gl.linkProgram(program);
-gl.useProgram(program);
+        <div class="status-bar">
+            <span id="statusText">Ready</span>
+            <span id="infoText">No media loaded</span>
+        </div>
+    </div>
 
-// ----------------- 3D CUBE DATA -----------------
-const cubeVertices=new Float32Array([
-  -1,-1,-1, 1,-1,-1, 1,1,-1, -1,1,-1,
-  -1,-1,1, 1,-1,1, 1,1,1, -1,1,1
-]);
-const cubeIndices=new Uint16Array([
-  0,1,1,2,2,3,3,0, 4,5,5,6,6,7,7,4,
-  0,4,1,5,2,6,3,7
-]);
-const vbo=gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER,cubeVertices);
-gl.bufferData(gl.ARRAY_BUFFER,cubeVertices,gl.STATIC_DRAW);
-const ibo=gl.createBuffer();
-gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeIndices);
-gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,cubeIndices,gl.STATIC_DRAW);
-const posAttrib=gl.getAttribLocation(program,"position");
-gl.enableVertexAttribArray(posAttrib);
-gl.vertexAttribPointer(posAttrib,3,gl.FLOAT,false,0,0);
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Processing</h2>
+            <div id="modalBody">
+                <div class="spinner"></div>
+                <p style="text-align:center; margin-top:1rem;">Please wait...</p>
+            </div>
+        </div>
+    </div>
 
-// ----------------- UNIFORMS -----------------
-const uModelLoc=gl.getUniformLocation(program,"uModel");
-const uViewLoc=gl.getUniformLocation(program,"uView");
-const uProjLoc=gl.getUniformLocation(program,"uProjection");
-const uColorLoc=gl.getUniformLocation(program,"uColor");
-
-// ----------------- BASIC MATRIX HELPERS -----------------
-function perspective(fov,aspect,near,far){
-  const f=1/Math.tan(fov/2);
-  const nf=1/(near-far);
-  return [
-    f/aspect,0,0,0,
-    0,f,0,0,
-    0,0,(far+near)*nf,-1,
-    0,0,2*far*near*nf,0
-  ];
-}
-function identity(){return [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];}
-function translate(m,v){
-  const t=identity();
-  t[12]=v[0]; t[13]=v[1]; t[14]=v[2];
-  return multiply(m,t);
-}
-function rotateY(m,a){
-  const r=identity();
-  r[0]=Math.cos(a); r[2]=Math.sin(a);
-  r[8]=-Math.sin(a); r[10]=Math.cos(a);
-  return multiply(m,r);
-}
-function rotateX(m,a){
-  const r=identity();
-  r[5]=Math.cos(a); r[6]=-Math.sin(a);
-  r[9]=Math.sin(a); r[10]=Math.cos(a);
-  return multiply(m,r);
-}
-function multiply(a,b){
-  const o=new Array(16).fill(0);
-  for(let i=0;i<4;i++)
-    for(let j=0;j<4;j++)
-      for(let k=0;k<4;k++)
-        o[i*4+j]+=a[i*4+k]*b[k*4+j];
-  return o;
-}
-
-// ----------------- CAMERA -----------------
-const cameraPos=[0,0,6];
-const viewMat=translate(identity(),[-cameraPos[0],-cameraPos[1],-cameraPos[2]]);
-const projMat=perspective(Math.PI/4,cw/ch,0.1,100);
-
-// ----------------- MULTIPLE CUBES -----------------
-let cubes=[
-  {pos:[-2,0,0],rot:[0,0,0],color:[1,0.3,0.3]},
-  {pos:[2,0,0],rot:[0,0,0],color:[0.3,1,0.3]},
-  {pos:[0,2,0],rot:[0,0,0],color:[0.3,0.3,1]}
-];
-
-// ----------------- DRAGGABLE WINDOWS -----------------
-let windows=[];
-for(let i=0;i<2;i++){
-  const w=document.createElement("div");
-  w.className="window";
-  w.style.width="200px"; w.style.height="100px";
-  w.style.left=(50+i*220)+"px"; w.style.top="50px";
-  w.innerHTML=`<h3>Window ${i+1}</h3><p>Drag me!</p>`;
-  document.body.appendChild(w);
-  windows.push({el:w,x:parseInt(w.style.left),y:parseInt(w.style.top),drag:false});
-}
-
-windows.forEach(win=>{
-  win.el.addEventListener("mousedown", e=>{win.drag=true;win.offsetX=e.offsetX;win.offsetY=e.offsetY;});
-  win.el.addEventListener("mouseup", e=>{win.drag=false;});
-  win.el.addEventListener("mousemove", e=>{
-    if(win.drag){
-      win.x=e.clientX-win.offsetX;
-      win.y=e.clientY-win.offsetY;
-      win.el.style.left=win.x+"px";
-      win.el.style.top=win.y+"px";
-    }
-  });
-});
-
-// ----------------- GUI -----------------
-document.getElementById("timeBtn").onclick=()=>{
-  document.documentElement.classList.toggle("retro");
-};
-document.getElementById("particleBtn").onclick=e=>{
-  particlesEnabled=!particlesEnabled;
-  e.target.textContent="Particles: "+(particlesEnabled?"ON":"OFF");
-};
-document.getElementById("resetCubeBtn").onclick=()=>{
-  cubes.forEach(c=>{c.rot=[0,0,0];});
-};
-
-// ----------------- RENDER LOOP -----------------
-let t=0;
-function render(){
-  t+=0.01;
-  gl.clearColor(0,0,0,1);
-  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-  gl.enable(gl.DEPTH_TEST);
-
-  cubes.forEach(c=>{
-    c.rot[0]+=0.01; c.rot[1]+=0.02;
-    let model=identity();
-    model=translate(model,c.pos);
-    model=rotateX(model,c.rot[0]);
-    model=rotateY(model,c.rot[1]);
-    gl.uniformMatrix4fv(uModelLoc,false,new Float32Array(model));
-    gl.uniformMatrix4fv(uViewLoc,false,new Float32Array(viewMat));
-    gl.uniformMatrix4fv(uProjLoc,false,new Float32Array(projMat));
-    gl.uniform3fv(uColorLoc,new Float32Array(c.color));
-    gl.drawElements(gl.LINES,cubeIndices.length,gl.UNSIGNED_SHORT,0);
-  });
-
-  updateParticles();
-  requestAnimationFrame(render);
-}
-render();
-</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Global state
+        let canvas, ctx, image, videoElement;
+        let historyStack = [];
+        let currentMode = 'editor';
+        let scene, camera, renderer, controls;
+        let objects3D = [], lights3D = [];
+        
+        // Initialize
+        window.onload = function() {
+            canvas = document.getElementById('mainCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // File input handler
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            
+            // Mode switchers
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if(!this.classList.contains('mobile-toggle')) {
+                        switchMode(this.dataset.mode);
+                    }
+                });
+            });
+            
+            // Initialize 3D
+            init3D();
+            
+            updateStatus('Ready - Load media to begin');
+        };
+        
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if(files.length === 0) return;
+            
+            const file = files[0];
+            const reader = new FileReader();
+            
+            if(file.type.startsWith('image/')) {
+                reader.onload = function(event) {
+                    image = new Image();
+                    image.onload = function() {
+                        canvas.width = Math.min(image.width, 1920);
+                        canvas.height = Math.min(image.height, 1080);
+                        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                        saveHistory();
+                        updateStatus('Image loaded: ' + file.name);
+                        updateInfo(canvas.width + ' × ' + canvas.height);
+                    };
+                    image.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else if(file.type.startsWith('video/')) {
+                videoElement = document.createElement('video');
+                videoElement.src = URL.createObjectURL(file);
+                videoElement.onloadedmetadata = function() {
+                    canvas.width = Math.min(videoElement.videoWidth, 1920);
+                    canvas.height = Math.min(videoElement.videoHeight, 1080);
+                    videoElement.currentTime = 0;
+                    updateStatus('Video loaded: ' + file.name);
+                    updateInfo(canvas.width + ' × ' + canvas.height + ' video');
+                };
+            }
+        }
+        
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.dataset.mode === mode) btn.classList.add('active');
+            });
+            
+            // Hide all tool sections
+            document.getElementById('editorTools').style.display = 'none';
+            document.getElementById('chromaTools').style.display = 'none';
+            document.getElementById('threeDTools').style.display = 'none';
+            document.getElementById('relightTools').style.display = 'none';
+            
+            // Show canvas or 3D
+            document.getElementById('mainCanvas').style.display = 'block';
+            document.getElementById('preview3D').style.display = 'none';
+            
+            switch(mode) {
+                case 'editor':
+                    document.getElementById('editorTools').style.display = 'block';
+                    break;
+                case 'chroma':
+                    document.getElementById('chromaTools').style.display = 'block';
+                    break;
+                case '3d':
+                    document.getElementById('threeDTools').style.display = 'block';
+                    document.getElementById('mainCanvas').style.display = 'none';
+                    document.getElementById('preview3D').style.display = 'block';
+                    animate3D();
+                    break;
+                case 'relight':
+                    document.getElementById('relightTools').style.display = 'block';
+                    break;
+            }
+            
+            updateStatus('Switched to ' + mode + ' mode');
+        }
+        
+        // Effect application
+        function applyEffect(type) {
+            if(!image && !videoElement) {
+                alert('Please load an image or video first');
+                return;
+            }
+            
+            saveHistory();
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            switch(type) {
+                case 'blur':
+                    applyConvolution(imageData, [
+                        1/9, 1/9, 1/9,
+                        1/9, 1/9, 1/9,
+                        1/9, 1/9, 1/9
+                    ]);
+                    break;
+                case 'sharpen':
+                    applyConvolution(imageData, [
+                        0, -1, 0,
+                        -1, 5, -1,
+                        0, -1, 0
+                    ]);
+                    break;
+                case 'edge':
+                    applyConvolution(imageData, [
+                        -1, -1, -1,
+                        -1, 8, -1,
+                        -1, -1, -1
+                    ]);
+                    break;
+                case 'emboss':
+                    applyConvolution(imageData, [
+                        -2, -1, 0,
+                        -1, 1, 1,
+                        0, 1, 2
+                    ]);
+                    break;
+                case 'vintage':
+                    for(let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i+1];
+                        const b = data[i+2];
+                        data[i] = r * 0.9 + 50;
+                        data[i+1] = g * 0.8 + 30;
+                        data[i+2] = b * 0.6 + 10;
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                    break;
+                case 'noir':
+                    for(let i = 0; i < data.length; i += 4) {
+                        const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+                        const contrast = 1.5;
+                        const adjusted = ((avg - 128) * contrast) + 128;
+                        data[i] = data[i+1] = data[i+2] = adjusted;
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                    break;
+            }
+            
+            updateStatus('Applied ' + type + ' effect');
+        }
+        
+        function applyConvolution(imageData, kernel) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+            const output = new Uint8ClampedArray(data);
+            
+            for(let y = 1; y < height - 1; y++) {
+                for(let x = 1; x < width - 1; x++) {
+                    let r = 0, g = 0, b = 0;
+                    
+                    for(let ky = -1; ky <= 1; ky++) {
+                        for(let kx = -1; kx <= 1; kx++) {
+                            const idx = ((y + ky) * width + (x + kx)) * 4;
+                            const k = kernel[(ky + 1) * 3 + (kx + 1)];
+                            r += data[idx] * k;
+                            g += data[idx + 1] * k;
+                            b += data[idx + 2] * k;
+                        }
+                    }
+                    
+                    const idx = (y * width + x) * 4;
+                    output[idx] = Math.min(255, Math.max(0, r));
+                    output[idx + 1] = Math.min(255, Math.max(0, g));
+                    output[idx + 2] = Math.min(255, Math.max(0, b));
+                }
+            }
+            
+            for(let i = 0; i < data.length; i++) {
+                data[i] = output[i];
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+        
+        // Color adjustments
+        function applyAdjustments() {
+            if(!image) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const brightness = parseInt(document.getElementById('brightness').value);
+            const contrast = parseInt(document.getElementById('contrast').value);
+            const saturation = parseInt(document.getElementById('saturation').value);
+            const hue = parseInt(document.getElementById('hue').value);
+            
+            ctx.filter = `brightness(${100 + brightness}%) contrast(${100 + contrast}%) saturate(${100 + saturation}%) hue-rotate(${hue}deg)`;
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            ctx.filter = 'none';
+        }
+        
+        // Chroma key
+        function applyChromaKey() {
+            if(!image) {
+                alert('Please load an image first');
+                return;
+            }
+            
+            showModal('Chroma Keying', 'Processing chroma key...');
+            
+            setTimeout(() => {
+                saveHistory();
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                
+                const keyColor = hexToRgb(document.getElementById('keyColor').value);
+                const threshold = parseInt(document.getElementById('threshold').value);
+                
+                for(let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    const distance = Math.sqrt(
+                        Math.pow(r - keyColor.r, 2) +
+                        Math.pow(g - keyColor.g, 2) +
+                        Math.pow(b - keyColor.b, 2)
+                    );
+                    
+                    if(distance < threshold * 3) {
+                        data[i + 3] = 0;
+                    }
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+                closeModal();
+                updateStatus('Chroma key applied');
+            }, 500);
+        }
+        
+        // Relighting
+        function updateRelight() {
+            if(!image) return;
+            
+            const lightX = parseInt(document.getElementById('lightX').value) / 100;
+            const lightY = parseInt(document.getElementById('lightY').value) / 100;
+            const intensity = parseInt(document.getElementById('intensity').value) / 100;
+            const lightColor = hexToRgb(document.getElementById('lightColor').value);
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            for(let y = 0; y < canvas.height; y++) {
+                for(let x = 0; x < canvas.width; x++) {
+                    const idx = (y * canvas.width + x) * 4;
+                    
+                    const dx = (x / canvas.width - 0.5 - lightX);
+                    const dy = (y / canvas.height - 0.5 - lightY);
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const factor = Math.max(0, 1 - dist * 2) * intensity;
+                    
+                    data[idx] = Math.min(255, data[idx] + lightColor.r * factor);
+                    data[idx + 1] = Math.min(255, data[idx + 1] + lightColor.g * factor);
+                    data[idx + 2] = Math.min(255, data[idx + 2] + lightColor.b * factor);
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+        
+        function applyRelight() {
+            saveHistory();
+            updateStatus('Relighting applied');
+        }
+        
+        // 3D functionality
+        function init3D() {
+            const canvas3D = document.getElementById('preview3D');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0f);
+            
+            camera = new THREE.PerspectiveCamera(75, canvas3D.width / canvas3D.height, 0.1, 1000);
+            camera.position.z = 5;
+            
+            renderer = new THREE.WebGLRenderer({ canvas: canvas3D, antialias: true });
+            renderer.setSize(canvas3D.width, canvas3D.height);
+            renderer.shadowMap.enabled = true;
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 5, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            lights3D.push(directionalLight);
+            
+            // Add grid
+            const gridHelper = new THREE.GridHelper(10, 10, 0x00ff88, 0x2a2a38);
+            scene.add(gridHelper);
+            
+            // Mouse controls
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            
+            canvas3D.addEventListener('mousedown', (e) => {
+                isDragging = true;
+            });
+            
+            canvas3D.addEventListener('mousemove', (e) => {
+                if(isDragging) {
+                    const deltaX = e.offsetX - previousMousePosition.x;
+                    const deltaY = e.offsetY - previousMousePosition.y;
+                    
+                    camera.position.x += deltaX * 0.01;
+                    camera.position.y -= deltaY * 0.01;
+                    camera.lookAt(scene.position);
+                }
+                previousMousePosition = { x: e.offsetX, y: e.offsetY };
+            });
+            
+            canvas3D.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            canvas3D.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                camera.position.z += e.deltaY * 0.01;
+                camera.position.z = Math.max(1, Math.min(20, camera.position.z));
+            });
+        }
+        
+        function add3DShape(type) {
+            let geometry, material, mesh;
+            
+            material = new THREE.MeshPhongMaterial({ 
+                color: Math.random() * 0xffffff,
+                shininess: 100
+            });
+            
+            switch(type) {
+                case 'cube':
+                    geometry = new THREE.BoxGeometry(1, 1, 1);
+                    break;
+                case 'sphere':
+                    geometry = new THREE.SphereGeometry(0.5, 32, 32);
+                    break;
+                case 'cylinder':
+                    geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+                    break;
+                case 'cone':
+                    geometry = new THREE.ConeGeometry(0.5, 1, 32);
+                    break;
+                case 'torus':
+                    geometry = new THREE.TorusGeometry(0.5, 0.2, 16, 100);
+                    break;
+            }
+            
+            mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(
+                (Math.random() - 0.5) * 4,
+                (Math.random() - 0.5) * 4,
+                (Math.random() - 0.5) * 4
+            );
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            
+            scene.add(mesh);
+            objects3D.push(mesh);
+            
+            updateStatus('Added ' + type + ' to scene');
+        }
+        
+        function add3DLight(type) {
+            let light;
+            
+            if(type === 'point') {
+                light = new THREE.PointLight(0xffffff, 1, 100);
+                light.position.set(2, 3, 2);
+            } else {
+                light = new THREE.DirectionalLight(0xffffff, 0.5);
+                light.position.set(-5, 5, -5);
+            }
+            
+            scene.add(light);
+            lights3D.push(light);
+            updateStatus('Added ' + type + ' light');
+        }
+        
+        function toggleRayTrace() {
+            const enabled = document.getElementById('enableRayTrace').checked;
+            renderer.shadowMap.enabled = enabled;
+            updateStatus('Ray tracing ' + (enabled ? 'enabled' : 'disabled'));
+        }
+        
+        function animate3D() {
+            if(currentMode !== '3d') return;
+            
+            requestAnimationFrame(animate3D);
+            
+            objects3D.forEach(obj => {
+                obj.rotation.x += 0.005;
+                obj.rotation.y += 0.005;
+            });
+            
+            renderer.render(scene, camera);
+        }
+        
+        // AI Processing (simulated)
+        function applyNeuralStyle(style) {
+            if(!image) {
+                alert('Please load an image first');
+                return;
+            }
+            
+            showModal('Neural Style Transfer', 'Applying ' + style + ' style...');
+            
+            setTimeout(() => {
+                saveHistory();
+                
+                // Simulate style transfer with filters
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                
+                switch(style) {
+                    case 'impressionist':
+                        for(let i = 0; i < data.length; i += 4) {
+                            data[i] = Math.min(255, data[i] * 1.2 + 20);
+                            data[i+1] = Math.min(255, data[i+1] * 1.1 + 10);
+                            data[i+2] = Math.min(255, data[i+2] * 0.9);
+                        }
+                        break;
+                    case 'abstract':
+                        applyConvolution(imageData, [
+                            2, -1, 2,
+                            -1, 1, -1,
+                            2, -1, 2
+                        ]);
+                        break;
+                    case 'sketch':
+                        applyConvolution(imageData, [
+                            -1, -1, -1,
+                            -1, 9, -1,
+                            -1, -1, -1
+                        ]);
+                        for(let i = 0; i < data.length; i += 4) {
+                            const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+                            data[i] = data[i+1] = data[i+2] = avg > 128 ? 255 : 0;
+                        }
+                        break;
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+                closeModal();
+                updateStatus('Applied ' + style + ' neural style');
+            }, 1500);
+        }
+        
+        function applyAI(type) {
+            if(!image) {
+                alert('Please load an image first');
+                return;
+            }
+            
+            showModal('AI Processing', 'Applying ' + type + '...');
+            
+            setTimeout(() => {
+                saveHistory();
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                
+                switch(type) {
+                    case 'denoise':
+                        applyConvolution(imageData, [
+                            1/16, 2/16, 1/16,
+                            2/16, 4/16, 2/16,
+                            1/16, 2/16, 1/16
+                        ]);
+                        break;
+                    case 'upscale':
+                        // Simulated upscaling
+                        const newCanvas = document.createElement('canvas');
+                        newCanvas.width = canvas.width * 2;
+                        newCanvas.height = canvas.height * 2;
+                        const newCtx = newCanvas.getContext('2d');
+                        newCtx.imageSmoothingEnabled = true;
+                        newCtx.imageSmoothingQuality = 'high';
+                        newCtx.drawImage(canvas, 0, 0, newCanvas.width, newCanvas.height);
+                        canvas.width = newCanvas.width;
+                        canvas.height = newCanvas.height;
+                        ctx.drawImage(newCanvas, 0, 0);
+                        break;
+                    case 'superres':
+                        applyConvolution(imageData, [
+                            0, -1, 0,
+                            -1, 5, -1,
+                            0, -1, 0
+                        ]);
+                        break;
+                    case 'background':
+                        // Simple background removal simulation
+                        for(let i = 0; i < data.length; i += 4) {
+                            const brightness = (data[i] + data[i+1] + data[i+2]) / 3;
+                            if(brightness > 200 || brightness < 50) {
+                                data[i+3] = 0;
+                            }
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                        break;
+                }
+                
+                closeModal();
+                updateStatus('Applied AI ' + type);
+            }, 2000);
+        }
+        
+        // Utility functions
+        function saveHistory() {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            historyStack.push(imageData);
+            if(historyStack.length > 20) historyStack.shift();
+        }
+        
+        function undoLast() {
+            if(historyStack.length > 0) {
+                const previous = historyStack.pop();
+                ctx.putImageData(previous, 0, 0);
+                updateStatus('Undo applied');
+            }
+        }
+        
+        function resetCanvas() {
+            if(image) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                historyStack = [];
+                updateStatus('Canvas reset');
+            }
+        }
+        
+        function downloadCanvas() {
+            const link = document.createElement('a');
+            link.download = 'cgi-studio-export-' + Date.now() + '.png';
+            link.href = currentMode === '3d' ? 
+                document.getElementById('preview3D').toDataURL() :
+                canvas.toDataURL();
+            link.click();
+            updateStatus('Image exported');
+        }
+        
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+        
+        function showModal(title, body) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = '<div class="spinner"></div><p style="text-align:center; margin-top:1rem;">' + body + '</p>';
+            document.getElementById('modal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+        
+        function updateStatus(text) {
+            document.getElementById('statusText').textContent = text;
+        }
+        
+        function updateInfo(text) {
+            document.getElementById('infoText').textContent = text;
+        }
+        
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+    </script>
 </body>
 </html>
