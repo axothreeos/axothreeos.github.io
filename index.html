@@ -2,1229 +2,685 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CGI Studio Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Path Tracer</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #00ff88;
-            --primary-dark: #00cc6a;
-            --secondary: #ff0080;
-            --bg-dark: #0a0a0f;
-            --bg-medium: #1a1a24;
-            --bg-light: #2a2a38;
-            --text: #ffffff;
-            --text-dim: #a0a0b0;
-            --border: #3a3a48;
-            --glow: rgba(0, 255, 136, 0.3);
-        }
-
         body {
-            font-family: 'Rajdhani', sans-serif;
-            background: var(--bg-dark);
-            color: var(--text);
-            overflow: hidden;
-            touch-action: none;
-        }
-
-        /* Animated background */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 0, 128, 0.1) 0%, transparent 50%);
-            animation: bgPulse 10s ease-in-out infinite;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        @keyframes bgPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        .container {
-            width: 100vw;
-            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Header */
-        header {
-            background: var(--bg-medium);
-            border-bottom: 2px solid var(--primary);
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 20px var(--glow);
         }
-
-        .logo {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 0 20px var(--glow);
-        }
-
-        .mode-selector {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .mode-btn {
-            background: var(--bg-light);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 0.9rem;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .mode-btn:hover {
-            background: var(--primary-dark);
-            border-color: var(--primary);
-            color: var(--bg-dark);
-            box-shadow: 0 0 15px var(--glow);
-        }
-
-        .mode-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: var(--bg-dark);
-            font-weight: 700;
-        }
-
-        /* Main workspace */
-        .workspace {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 280px;
-            background: var(--bg-medium);
-            border-right: 1px solid var(--border);
-            overflow-y: auto;
-            padding: 1rem;
-        }
-
-        .tool-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .tool-section h3 {
-            font-family: 'Orbitron', sans-serif;
-            color: var(--primary);
-            font-size: 0.9rem;
-            margin-bottom: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .tool-btn, .upload-btn {
+        #container {
+            max-width: 1200px;
             width: 100%;
-            background: var(--bg-light);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 0.7rem;
-            margin-bottom: 0.5rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 0.9rem;
-            transition: all 0.3s;
-            text-align: left;
         }
-
-        .tool-btn:hover, .upload-btn:hover {
-            background: var(--bg-dark);
-            border-color: var(--primary);
-            color: var(--primary);
-            transform: translateX(5px);
+        canvas {
+            width: 100%;
+            height: auto;
+            border: 2px solid #333;
+            border-radius: 8px;
+            image-rendering: pixelated;
         }
-
-        .slider-control {
-            margin-bottom: 1rem;
+        .controls {
+            margin-top: 20px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
         }
-
-        .slider-control label {
-            display: block;
-            font-size: 0.85rem;
-            color: var(--text-dim);
-            margin-bottom: 0.3rem;
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
-
+        label {
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
         input[type="range"] {
             width: 100%;
-            height: 4px;
-            background: var(--bg-light);
-            border-radius: 2px;
-            outline: none;
-            -webkit-appearance: none;
         }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            background: var(--primary);
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 10px var(--glow);
-        }
-
-        input[type="color"] {
-            width: 100%;
-            height: 40px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            background: var(--bg-light);
-            cursor: pointer;
-        }
-
-        /* Canvas area */
-        .canvas-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            background: var(--bg-dark);
-        }
-
-        .canvas-toolbar {
-            background: var(--bg-medium);
-            padding: 0.5rem 1rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .canvas-container {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #mainCanvas, #preview3D {
-            max-width: 100%;
-            max-height: 100%;
-            border: 1px solid var(--border);
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-        }
-
-        #preview3D {
-            display: none;
-        }
-
-        /* Properties panel */
-        .properties {
-            width: 260px;
-            background: var(--bg-medium);
-            border-left: 1px solid var(--border);
-            overflow-y: auto;
-            padding: 1rem;
-        }
-
-        /* Status bar */
-        .status-bar {
-            background: var(--bg-medium);
-            border-top: 1px solid var(--border);
-            padding: 0.5rem 1rem;
-            font-size: 0.85rem;
-            color: var(--text-dim);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: var(--bg-medium);
-            border: 2px solid var(--primary);
-            border-radius: 8px;
-            padding: 2rem;
-            max-width: 600px;
-            width: 90%;
-            box-shadow: 0 0 50px var(--glow);
-        }
-
-        .modal-content h2 {
-            font-family: 'Orbitron', sans-serif;
-            color: var(--primary);
-            margin-bottom: 1rem;
-        }
-
-        .close-modal {
-            float: right;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-dim);
-        }
-
-        .close-modal:hover {
-            color: var(--secondary);
-        }
-
-        /* Loading spinner */
-        .spinner {
-            border: 3px solid var(--bg-light);
-            border-top: 3px solid var(--primary);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 2rem auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Mobile optimizations */
-        @media (max-width: 768px) {
-            .sidebar, .properties {
-                position: fixed;
-                left: -100%;
-                top: 0;
-                bottom: 0;
-                z-index: 100;
-                transition: left 0.3s;
-                width: 80%;
-                max-width: 280px;
-            }
-
-            .sidebar.open {
-                left: 0;
-            }
-
-            .properties {
-                left: auto;
-                right: -100%;
-            }
-
-            .properties.open {
-                right: 0;
-            }
-
-            .mobile-toggle {
-                display: block;
-                background: var(--bg-light);
-                border: 1px solid var(--border);
-                color: var(--text);
-                padding: 0.5rem 1rem;
-                border-radius: 4px;
-                cursor: pointer;
-            }
-
-            .mode-selector {
-                flex-wrap: wrap;
-            }
-
-            .mode-btn {
-                padding: 0.4rem 0.6rem;
-                font-size: 0.8rem;
-            }
-        }
-
-        @media (min-width: 769px) {
-            .mobile-toggle {
-                display: none;
-            }
-        }
-
-        /* Checkbox styling */
-        .checkbox-control {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.8rem;
-        }
-
         input[type="checkbox"] {
             width: 20px;
             height: 20px;
-            accent-color: var(--primary);
         }
-
-        .param-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .param-input {
-            background: var(--bg-light);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 0.5rem;
-            border-radius: 4px;
-            font-family: 'Rajdhani', sans-serif;
-        }
-
-        /* Neural network controls */
-        .nn-control {
-            background: var(--bg-light);
-            border: 1px solid var(--border);
-            padding: 1rem;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-        }
-
-        .nn-control h4 {
-            color: var(--secondary);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .process-btn {
-            width: 100%;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        button {
+            padding: 12px 24px;
+            background: #4a9eff;
             border: none;
-            color: var(--bg-dark);
-            padding: 0.8rem;
-            border-radius: 4px;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
             cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s;
+            transition: background 0.3s;
         }
-
-        .process-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px var(--glow);
+        button:hover {
+            background: #3a8eef;
         }
-
-        .process-btn:active {
-            transform: scale(0.98);
+        .stats {
+            margin-top: 10px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #aaa;
+        }
+        .value {
+            color: #4a9eff;
+            font-weight: bold;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .description {
+            text-align: center;
+            color: #888;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">CGI STUDIO PRO</div>
-            <div class="mode-selector">
-                <button class="mode-btn active" data-mode="editor">2D Editor</button>
-                <button class="mode-btn" data-mode="3d">3D Modeling</button>
-                <button class="mode-btn" data-mode="chroma">Chroma Key</button>
-                <button class="mode-btn" data-mode="relight">Relight</button>
-                <button class="mode-btn mobile-toggle" onclick="toggleSidebar()">☰</button>
-            </div>
-        </header>
-
-        <div class="workspace">
-            <!-- Sidebar -->
-            <aside class="sidebar" id="sidebar">
-                <div class="tool-section">
-                    <h3>Media Import</h3>
-                    <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none;">
-                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                        📁 Load Photos/Videos
-                    </button>
-                </div>
-
-                <div class="tool-section" id="editorTools">
-                    <h3>Effects</h3>
-                    <button class="tool-btn" onclick="applyEffect('blur')">Blur</button>
-                    <button class="tool-btn" onclick="applyEffect('sharpen')">Sharpen</button>
-                    <button class="tool-btn" onclick="applyEffect('edge')">Edge Detection</button>
-                    <button class="tool-btn" onclick="applyEffect('emboss')">Emboss</button>
-                    <button class="tool-btn" onclick="applyEffect('vintage')">Vintage</button>
-                    <button class="tool-btn" onclick="applyEffect('noir')">Film Noir</button>
-                </div>
-
-                <div class="tool-section" id="chromaTools" style="display:none;">
-                    <h3>Chroma Key</h3>
-                    <div class="slider-control">
-                        <label>Key Color:</label>
-                        <input type="color" id="keyColor" value="#00ff00">
-                    </div>
-                    <div class="slider-control">
-                        <label>Threshold: <span id="thresholdVal">30</span></label>
-                        <input type="range" id="threshold" min="0" max="100" value="30" 
-                               oninput="document.getElementById('thresholdVal').textContent=this.value">
-                    </div>
-                    <div class="slider-control">
-                        <label>Smoothness: <span id="smoothVal">5</span></label>
-                        <input type="range" id="smoothness" min="0" max="20" value="5"
-                               oninput="document.getElementById('smoothVal').textContent=this.value">
-                    </div>
-                    <button class="process-btn" onclick="applyChromaKey()">Apply Chroma Key</button>
-                </div>
-
-                <div class="tool-section" id="threeDTools" style="display:none;">
-                    <h3>3D Primitives</h3>
-                    <button class="tool-btn" onclick="add3DShape('cube')">Add Cube</button>
-                    <button class="tool-btn" onclick="add3DShape('sphere')">Add Sphere</button>
-                    <button class="tool-btn" onclick="add3DShape('cylinder')">Add Cylinder</button>
-                    <button class="tool-btn" onclick="add3DShape('cone')">Add Cone</button>
-                    <button class="tool-btn" onclick="add3DShape('torus')">Add Torus</button>
-                    
-                    <h3 style="margin-top:1rem;">Lighting</h3>
-                    <div class="checkbox-control">
-                        <input type="checkbox" id="enableRayTrace" onchange="toggleRayTrace()">
-                        <label>Ray Tracing</label>
-                    </div>
-                    <button class="tool-btn" onclick="add3DLight('point')">Add Point Light</button>
-                    <button class="tool-btn" onclick="add3DLight('directional')">Add Directional</button>
-                </div>
-
-                <div class="tool-section" id="relightTools" style="display:none;">
-                    <h3>Scene Relighting</h3>
-                    <div class="slider-control">
-                        <label>Light X: <span id="lightXVal">0</span></label>
-                        <input type="range" id="lightX" min="-100" max="100" value="0"
-                               oninput="document.getElementById('lightXVal').textContent=this.value; updateRelight()">
-                    </div>
-                    <div class="slider-control">
-                        <label>Light Y: <span id="lightYVal">-50</span></label>
-                        <input type="range" id="lightY" min="-100" max="100" value="-50"
-                               oninput="document.getElementById('lightYVal').textContent=this.value; updateRelight()">
-                    </div>
-                    <div class="slider-control">
-                        <label>Intensity: <span id="intensityVal">50</span></label>
-                        <input type="range" id="intensity" min="0" max="100" value="50"
-                               oninput="document.getElementById('intensityVal').textContent=this.value; updateRelight()">
-                    </div>
-                    <div class="slider-control">
-                        <label>Light Color:</label>
-                        <input type="color" id="lightColor" value="#ffffff" onchange="updateRelight()">
-                    </div>
-                    <button class="process-btn" onclick="applyRelight()">Apply Relighting</button>
-                </div>
-            </aside>
-
-            <!-- Canvas Area -->
-            <div class="canvas-area">
-                <div class="canvas-toolbar">
-                    <button class="tool-btn" onclick="resetCanvas()">🔄 Reset</button>
-                    <button class="tool-btn" onclick="downloadCanvas()">💾 Export</button>
-                    <button class="tool-btn" onclick="undoLast()">↶ Undo</button>
-                </div>
-                <div class="canvas-container">
-                    <canvas id="mainCanvas" width="800" height="600"></canvas>
-                    <canvas id="preview3D" width="800" height="600"></canvas>
-                </div>
-            </div>
-
-            <!-- Properties Panel -->
-            <aside class="properties" id="properties">
-                <div class="tool-section">
-                    <h3>Color Adjustments</h3>
-                    <div class="slider-control">
-                        <label>Brightness: <span id="brightnessVal">0</span></label>
-                        <input type="range" id="brightness" min="-100" max="100" value="0"
-                               oninput="document.getElementById('brightnessVal').textContent=this.value; applyAdjustments()">
-                    </div>
-                    <div class="slider-control">
-                        <label>Contrast: <span id="contrastVal">0</span></label>
-                        <input type="range" id="contrast" min="-100" max="100" value="0"
-                               oninput="document.getElementById('contrastVal').textContent=this.value; applyAdjustments()">
-                    </div>
-                    <div class="slider-control">
-                        <label>Saturation: <span id="saturationVal">0</span></label>
-                        <input type="range" id="saturation" min="-100" max="100" value="0"
-                               oninput="document.getElementById('saturationVal').textContent=this.value; applyAdjustments()">
-                    </div>
-                    <div class="slider-control">
-                        <label>Hue: <span id="hueVal">0</span></label>
-                        <input type="range" id="hue" min="-180" max="180" value="0"
-                               oninput="document.getElementById('hueVal').textContent=this.value; applyAdjustments()">
-                    </div>
-                </div>
-
-                <div class="tool-section">
-                    <h3>AI Processing</h3>
-                    <div class="nn-control">
-                        <h4>Style Transfer</h4>
-                        <button class="tool-btn" onclick="applyNeuralStyle('impressionist')">Impressionist</button>
-                        <button class="tool-btn" onclick="applyNeuralStyle('abstract')">Abstract</button>
-                        <button class="tool-btn" onclick="applyNeuralStyle('sketch')">Sketch</button>
-                    </div>
-                    <div class="nn-control">
-                        <h4>Enhancement</h4>
-                        <button class="tool-btn" onclick="applyAI('denoise')">AI Denoise</button>
-                        <button class="tool-btn" onclick="applyAI('upscale')">AI Upscale 2x</button>
-                        <button class="tool-btn" onclick="applyAI('superres')">Super Resolution</button>
-                    </div>
-                    <div class="nn-control">
-                        <h4>Generation</h4>
-                        <button class="tool-btn" onclick="applyAI('inpaint')">AI Inpaint</button>
-                        <button class="tool-btn" onclick="applyAI('background')">Remove Background</button>
-                    </div>
-                </div>
-            </aside>
-        </div>
-
-        <div class="status-bar">
-            <span id="statusText">Ready</span>
-            <span id="infoText">No media loaded</span>
-        </div>
-    </div>
-
-    <!-- Modal -->
-    <div class="modal" id="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle">Processing</h2>
-            <div id="modalBody">
-                <div class="spinner"></div>
-                <p style="text-align:center; margin-top:1rem;">Please wait...</p>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script>
-        // Global state
-        let canvas, ctx, image, videoElement;
-        let historyStack = [];
-        let currentMode = 'editor';
-        let scene, camera, renderer, controls;
-        let objects3D = [], lights3D = [];
+    <div id="container">
+        <h1>Advanced Path Tracer</h1>
+        <p class="description">Real-time path tracing with depth of field, chromatic aberration, volumetric lighting & soft shadows</p>
         
-        // Initialize
-        window.onload = function() {
-            canvas = document.getElementById('mainCanvas');
-            ctx = canvas.getContext('2d');
+        <canvas id="canvas"></canvas>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Samples Per Frame: <span class="value" id="samplesValue">1</span></label>
+                <input type="range" id="samples" min="1" max="4" value="1">
+            </div>
             
-            // File input handler
-            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            <div class="control-group">
+                <label>Max Bounces: <span class="value" id="bouncesValue">5</span></label>
+                <input type="range" id="bounces" min="2" max="10" value="5">
+            </div>
             
-            // Mode switchers
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    if(!this.classList.contains('mobile-toggle')) {
-                        switchMode(this.dataset.mode);
-                    }
-                });
-            });
+            <div class="control-group">
+                <label>Aperture (DOF): <span class="value" id="apertureValue">0.15</span></label>
+                <input type="range" id="aperture" min="0" max="0.5" step="0.01" value="0.15">
+            </div>
             
-            // Initialize 3D
-            init3D();
+            <div class="control-group">
+                <label>Focus Distance: <span class="value" id="focusValue">8.0</span></label>
+                <input type="range" id="focus" min="3" max="15" step="0.1" value="8.0">
+            </div>
             
-            updateStatus('Ready - Load media to begin');
+            <div class="control-group">
+                <label>Chromatic Aberration: <span class="value" id="aberrationValue">0.02</span></label>
+                <input type="range" id="aberration" min="0" max="0.1" step="0.005" value="0.02">
+            </div>
+            
+            <div class="control-group">
+                <label>Volumetric Density: <span class="value" id="volumeValue">0.05</span></label>
+                <input type="range" id="volume" min="0" max="0.2" step="0.01" value="0.05">
+            </div>
+            
+            <div class="control-group">
+                <label>Camera Rotation: <span class="value" id="rotationValue">0.0</span></label>
+                <input type="range" id="rotation" min="0" max="6.28" step="0.1" value="0">
+            </div>
+            
+            <div class="control-group">
+                <button id="reset">Reset Accumulation</button>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div>Frame: <span class="value" id="frameCount">0</span></div>
+            <div>FPS: <span class="value" id="fps">0</span></div>
+            <div>Resolution: <span class="value" id="resolution">800x600</span></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Settings
+        const WIDTH = 800;
+        const HEIGHT = 600;
+        canvas.width = WIDTH;
+        canvas.height = HEIGHT;
+        
+        let settings = {
+            samplesPerFrame: 1,
+            maxBounces: 5,
+            aperture: 0.15,
+            focusDistance: 8.0,
+            chromaticAberration: 0.02,
+            volumetricDensity: 0.05,
+            cameraRotation: 0.0
         };
         
-        function handleFileSelect(e) {
-            const files = e.target.files;
-            if(files.length === 0) return;
+        let frameCount = 0;
+        let accumBuffer = new Float32Array(WIDTH * HEIGHT * 3);
+        let imageData = ctx.createImageData(WIDTH, HEIGHT);
+        let lastTime = performance.now();
+        let fps = 0;
+        
+        // Vector math utilities
+        class Vec3 {
+            constructor(x = 0, y = 0, z = 0) {
+                this.x = x; this.y = y; this.z = z;
+            }
             
-            const file = files[0];
-            const reader = new FileReader();
+            add(v) { return new Vec3(this.x + v.x, this.y + v.y, this.z + v.z); }
+            sub(v) { return new Vec3(this.x - v.x, this.y - v.y, this.z - v.z); }
+            mul(s) { return new Vec3(this.x * s, this.y * s, this.z * s); }
+            mulVec(v) { return new Vec3(this.x * v.x, this.y * v.y, this.z * v.z); }
+            div(s) { return new Vec3(this.x / s, this.y / s, this.z / s); }
+            dot(v) { return this.x * v.x + this.y * v.y + this.z * v.z; }
+            cross(v) {
+                return new Vec3(
+                    this.y * v.z - this.z * v.y,
+                    this.z * v.x - this.x * v.z,
+                    this.x * v.y - this.y * v.x
+                );
+            }
+            length() { return Math.sqrt(this.dot(this)); }
+            normalize() { 
+                const len = this.length();
+                return len > 0 ? this.div(len) : new Vec3(0, 0, 0);
+            }
+            reflect(n) {
+                return this.sub(n.mul(2 * this.dot(n)));
+            }
+        }
+        
+        // Random number generator with seed
+        let seed = Math.random() * 10000;
+        function random() {
+            seed = (seed * 9301 + 49297) % 233280;
+            return seed / 233280;
+        }
+        
+        function randomInUnitDisk() {
+            while (true) {
+                const p = new Vec3(random() * 2 - 1, random() * 2 - 1, 0);
+                if (p.dot(p) < 1) return p;
+            }
+        }
+        
+        function randomInUnitSphere() {
+            while (true) {
+                const p = new Vec3(random() * 2 - 1, random() * 2 - 1, random() * 2 - 1);
+                if (p.dot(p) < 1) return p;
+            }
+        }
+        
+        function randomUnitVector() {
+            return randomInUnitSphere().normalize();
+        }
+        
+        // Ray class
+        class Ray {
+            constructor(origin, direction) {
+                this.origin = origin;
+                this.direction = direction.normalize();
+            }
             
-            if(file.type.startsWith('image/')) {
-                reader.onload = function(event) {
-                    image = new Image();
-                    image.onload = function() {
-                        canvas.width = Math.min(image.width, 1920);
-                        canvas.height = Math.min(image.height, 1080);
-                        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-                        saveHistory();
-                        updateStatus('Image loaded: ' + file.name);
-                        updateInfo(canvas.width + ' × ' + canvas.height);
-                    };
-                    image.src = event.target.result;
+            at(t) {
+                return this.origin.add(this.direction.mul(t));
+            }
+        }
+        
+        // Material types
+        const MaterialType = {
+            DIFFUSE: 0,
+            METAL: 1,
+            GLASS: 2,
+            EMISSIVE: 3
+        };
+        
+        // Sphere class
+        class Sphere {
+            constructor(center, radius, material) {
+                this.center = center;
+                this.radius = radius;
+                this.material = material;
+            }
+            
+            intersect(ray, tMin, tMax) {
+                const oc = ray.origin.sub(this.center);
+                const a = ray.direction.dot(ray.direction);
+                const halfB = oc.dot(ray.direction);
+                const c = oc.dot(oc) - this.radius * this.radius;
+                const discriminant = halfB * halfB - a * c;
+                
+                if (discriminant < 0) return null;
+                
+                const sqrtD = Math.sqrt(discriminant);
+                let t = (-halfB - sqrtD) / a;
+                
+                if (t < tMin || t > tMax) {
+                    t = (-halfB + sqrtD) / a;
+                    if (t < tMin || t > tMax) return null;
+                }
+                
+                const point = ray.at(t);
+                const normal = point.sub(this.center).div(this.radius);
+                
+                return {
+                    t: t,
+                    point: point,
+                    normal: normal,
+                    material: this.material
                 };
-                reader.readAsDataURL(file);
-            } else if(file.type.startsWith('video/')) {
-                videoElement = document.createElement('video');
-                videoElement.src = URL.createObjectURL(file);
-                videoElement.onloadedmetadata = function() {
-                    canvas.width = Math.min(videoElement.videoWidth, 1920);
-                    canvas.height = Math.min(videoElement.videoHeight, 1080);
-                    videoElement.currentTime = 0;
-                    updateStatus('Video loaded: ' + file.name);
-                    updateInfo(canvas.width + ' × ' + canvas.height + ' video');
+            }
+        }
+        
+        // Plane class (infinite)
+        class Plane {
+            constructor(point, normal, material) {
+                this.point = point;
+                this.normal = normal.normalize();
+                this.material = material;
+            }
+            
+            intersect(ray, tMin, tMax) {
+                const denom = this.normal.dot(ray.direction);
+                if (Math.abs(denom) < 1e-6) return null;
+                
+                const t = this.point.sub(ray.origin).dot(this.normal) / denom;
+                if (t < tMin || t > tMax) return null;
+                
+                return {
+                    t: t,
+                    point: ray.at(t),
+                    normal: this.normal,
+                    material: this.material
                 };
             }
         }
         
-        function switchMode(mode) {
-            currentMode = mode;
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if(btn.dataset.mode === mode) btn.classList.add('active');
-            });
-            
-            // Hide all tool sections
-            document.getElementById('editorTools').style.display = 'none';
-            document.getElementById('chromaTools').style.display = 'none';
-            document.getElementById('threeDTools').style.display = 'none';
-            document.getElementById('relightTools').style.display = 'none';
-            
-            // Show canvas or 3D
-            document.getElementById('mainCanvas').style.display = 'block';
-            document.getElementById('preview3D').style.display = 'none';
-            
-            switch(mode) {
-                case 'editor':
-                    document.getElementById('editorTools').style.display = 'block';
-                    break;
-                case 'chroma':
-                    document.getElementById('chromaTools').style.display = 'block';
-                    break;
-                case '3d':
-                    document.getElementById('threeDTools').style.display = 'block';
-                    document.getElementById('mainCanvas').style.display = 'none';
-                    document.getElementById('preview3D').style.display = 'block';
-                    animate3D();
-                    break;
-                case 'relight':
-                    document.getElementById('relightTools').style.display = 'block';
-                    break;
-            }
-            
-            updateStatus('Switched to ' + mode + ' mode');
-        }
-        
-        // Effect application
-        function applyEffect(type) {
-            if(!image && !videoElement) {
-                alert('Please load an image or video first');
-                return;
-            }
-            
-            saveHistory();
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            
-            switch(type) {
-                case 'blur':
-                    applyConvolution(imageData, [
-                        1/9, 1/9, 1/9,
-                        1/9, 1/9, 1/9,
-                        1/9, 1/9, 1/9
-                    ]);
-                    break;
-                case 'sharpen':
-                    applyConvolution(imageData, [
-                        0, -1, 0,
-                        -1, 5, -1,
-                        0, -1, 0
-                    ]);
-                    break;
-                case 'edge':
-                    applyConvolution(imageData, [
-                        -1, -1, -1,
-                        -1, 8, -1,
-                        -1, -1, -1
-                    ]);
-                    break;
-                case 'emboss':
-                    applyConvolution(imageData, [
-                        -2, -1, 0,
-                        -1, 1, 1,
-                        0, 1, 2
-                    ]);
-                    break;
-                case 'vintage':
-                    for(let i = 0; i < data.length; i += 4) {
-                        const r = data[i];
-                        const g = data[i+1];
-                        const b = data[i+2];
-                        data[i] = r * 0.9 + 50;
-                        data[i+1] = g * 0.8 + 30;
-                        data[i+2] = b * 0.6 + 10;
-                    }
-                    ctx.putImageData(imageData, 0, 0);
-                    break;
-                case 'noir':
-                    for(let i = 0; i < data.length; i += 4) {
-                        const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-                        const contrast = 1.5;
-                        const adjusted = ((avg - 128) * contrast) + 128;
-                        data[i] = data[i+1] = data[i+2] = adjusted;
-                    }
-                    ctx.putImageData(imageData, 0, 0);
-                    break;
-            }
-            
-            updateStatus('Applied ' + type + ' effect');
-        }
-        
-        function applyConvolution(imageData, kernel) {
-            const data = imageData.data;
-            const width = imageData.width;
-            const height = imageData.height;
-            const output = new Uint8ClampedArray(data);
-            
-            for(let y = 1; y < height - 1; y++) {
-                for(let x = 1; x < width - 1; x++) {
-                    let r = 0, g = 0, b = 0;
-                    
-                    for(let ky = -1; ky <= 1; ky++) {
-                        for(let kx = -1; kx <= 1; kx++) {
-                            const idx = ((y + ky) * width + (x + kx)) * 4;
-                            const k = kernel[(ky + 1) * 3 + (kx + 1)];
-                            r += data[idx] * k;
-                            g += data[idx + 1] * k;
-                            b += data[idx + 2] * k;
-                        }
-                    }
-                    
-                    const idx = (y * width + x) * 4;
-                    output[idx] = Math.min(255, Math.max(0, r));
-                    output[idx + 1] = Math.min(255, Math.max(0, g));
-                    output[idx + 2] = Math.min(255, Math.max(0, b));
-                }
-            }
-            
-            for(let i = 0; i < data.length; i++) {
-                data[i] = output[i];
-            }
-            
-            ctx.putImageData(imageData, 0, 0);
-        }
-        
-        // Color adjustments
-        function applyAdjustments() {
-            if(!image) return;
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            const brightness = parseInt(document.getElementById('brightness').value);
-            const contrast = parseInt(document.getElementById('contrast').value);
-            const saturation = parseInt(document.getElementById('saturation').value);
-            const hue = parseInt(document.getElementById('hue').value);
-            
-            ctx.filter = `brightness(${100 + brightness}%) contrast(${100 + contrast}%) saturate(${100 + saturation}%) hue-rotate(${hue}deg)`;
-            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-            ctx.filter = 'none';
-        }
-        
-        // Chroma key
-        function applyChromaKey() {
-            if(!image) {
-                alert('Please load an image first');
-                return;
-            }
-            
-            showModal('Chroma Keying', 'Processing chroma key...');
-            
-            setTimeout(() => {
-                saveHistory();
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imageData.data;
+        // Scene setup with complex geometry
+        const scene = {
+            objects: [
+                // Ground plane
+                new Plane(
+                    new Vec3(0, -1, 0),
+                    new Vec3(0, 1, 0),
+                    { type: MaterialType.DIFFUSE, albedo: new Vec3(0.8, 0.8, 0.8), roughness: 1.0 }
+                ),
                 
-                const keyColor = hexToRgb(document.getElementById('keyColor').value);
-                const threshold = parseInt(document.getElementById('threshold').value);
+                // Back wall
+                new Plane(
+                    new Vec3(0, 0, -15),
+                    new Vec3(0, 0, 1),
+                    { type: MaterialType.DIFFUSE, albedo: new Vec3(0.5, 0.5, 0.7), roughness: 1.0 }
+                ),
                 
-                for(let i = 0; i < data.length; i += 4) {
-                    const r = data[i];
-                    const g = data[i + 1];
-                    const b = data[i + 2];
-                    
-                    const distance = Math.sqrt(
-                        Math.pow(r - keyColor.r, 2) +
-                        Math.pow(g - keyColor.g, 2) +
-                        Math.pow(b - keyColor.b, 2)
-                    );
-                    
-                    if(distance < threshold * 3) {
-                        data[i + 3] = 0;
-                    }
-                }
+                // Left glass sphere
+                new Sphere(
+                    new Vec3(-3, 0.5, -8),
+                    1.5,
+                    { type: MaterialType.GLASS, albedo: new Vec3(1, 1, 1), ior: 1.5 }
+                ),
                 
-                ctx.putImageData(imageData, 0, 0);
-                closeModal();
-                updateStatus('Chroma key applied');
-            }, 500);
-        }
+                // Center metallic sphere
+                new Sphere(
+                    new Vec3(0, 0, -8),
+                    1.0,
+                    { type: MaterialType.METAL, albedo: new Vec3(1.0, 0.8, 0.5), roughness: 0.1 }
+                ),
+                
+                // Right diffuse sphere
+                new Sphere(
+                    new Vec3(2.5, 0, -7),
+                    1.0,
+                    { type: MaterialType.DIFFUSE, albedo: new Vec3(0.8, 0.2, 0.2), roughness: 1.0 }
+                ),
+                
+                // Small glass ball
+                new Sphere(
+                    new Vec3(-1, -0.3, -5),
+                    0.7,
+                    { type: MaterialType.GLASS, albedo: new Vec3(1, 1, 1), ior: 1.5 }
+                ),
+                
+                // Emissive sphere (light)
+                new Sphere(
+                    new Vec3(4, 5, -8),
+                    2.0,
+                    { type: MaterialType.EMISSIVE, emission: new Vec3(8, 6, 4) }
+                ),
+                
+                // Secondary light
+                new Sphere(
+                    new Vec3(-5, 3, -6),
+                    1.5,
+                    { type: MaterialType.EMISSIVE, emission: new Vec3(2, 4, 8) }
+                ),
+                
+                // Small metal sphere
+                new Sphere(
+                    new Vec3(1.5, -0.5, -5.5),
+                    0.5,
+                    { type: MaterialType.METAL, albedo: new Vec3(0.7, 0.7, 0.9), roughness: 0.3 }
+                ),
+                
+                // Decorative spheres
+                new Sphere(
+                    new Vec3(-2, -0.6, -6),
+                    0.4,
+                    { type: MaterialType.DIFFUSE, albedo: new Vec3(0.2, 0.8, 0.3), roughness: 1.0 }
+                ),
+                
+                new Sphere(
+                    new Vec3(3.5, -0.5, -9),
+                    0.5,
+                    { type: MaterialType.METAL, albedo: new Vec3(0.9, 0.3, 0.3), roughness: 0.2 }
+                )
+            ]
+        };
         
-        // Relighting
-        function updateRelight() {
-            if(!image) return;
+        // Camera setup
+        function getCameraRay(x, y, wavelength = 0.0) {
+            const aspect = WIDTH / HEIGHT;
+            const fov = 50 * Math.PI / 180;
+            const viewportHeight = 2.0 * Math.tan(fov / 2);
+            const viewportWidth = aspect * viewportHeight;
             
-            const lightX = parseInt(document.getElementById('lightX').value) / 100;
-            const lightY = parseInt(document.getElementById('lightY').value) / 100;
-            const intensity = parseInt(document.getElementById('intensity').value) / 100;
-            const lightColor = hexToRgb(document.getElementById('lightColor').value);
+            // Camera position with rotation
+            const angle = settings.cameraRotation;
+            const camX = 5 * Math.sin(angle);
+            const camZ = -2 + 5 * Math.cos(angle);
+            const cameraPos = new Vec3(camX, 2, camZ);
+            const lookAt = new Vec3(0, 0, -8);
+            const vup = new Vec3(0, 1, 0);
             
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            const w = cameraPos.sub(lookAt).normalize();
+            const u = vup.cross(w).normalize();
+            const v = w.cross(u);
             
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
+            const horizontal = u.mul(viewportWidth);
+            const vertical = v.mul(viewportHeight);
+            const lowerLeft = cameraPos
+                .sub(horizontal.div(2))
+                .sub(vertical.div(2))
+                .sub(w);
             
-            for(let y = 0; y < canvas.height; y++) {
-                for(let x = 0; x < canvas.width; x++) {
-                    const idx = (y * canvas.width + x) * 4;
-                    
-                    const dx = (x / canvas.width - 0.5 - lightX);
-                    const dy = (y / canvas.height - 0.5 - lightY);
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const factor = Math.max(0, 1 - dist * 2) * intensity;
-                    
-                    data[idx] = Math.min(255, data[idx] + lightColor.r * factor);
-                    data[idx + 1] = Math.min(255, data[idx + 1] + lightColor.g * factor);
-                    data[idx + 2] = Math.min(255, data[idx + 2] + lightColor.b * factor);
-                }
-            }
+            // Depth of field - lens sampling
+            const rd = randomInUnitDisk().mul(settings.aperture);
+            const offset = u.mul(rd.x).add(v.mul(rd.y));
             
-            ctx.putImageData(imageData, 0, 0);
-        }
-        
-        function applyRelight() {
-            saveHistory();
-            updateStatus('Relighting applied');
-        }
-        
-        // 3D functionality
-        function init3D() {
-            const canvas3D = document.getElementById('preview3D');
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a0f);
+            const s = x / WIDTH;
+            const t = y / HEIGHT;
             
-            camera = new THREE.PerspectiveCamera(75, canvas3D.width / canvas3D.height, 0.1, 1000);
-            camera.position.z = 5;
+            // Add chromatic aberration offset based on wavelength
+            const aberrationOffset = wavelength * settings.chromaticAberration;
+            const sAberrated = s + aberrationOffset;
             
-            renderer = new THREE.WebGLRenderer({ canvas: canvas3D, antialias: true });
-            renderer.setSize(canvas3D.width, canvas3D.height);
-            renderer.shadowMap.enabled = true;
+            const pointOnFocalPlane = lowerLeft
+                .add(horizontal.mul(sAberrated))
+                .add(vertical.mul(t));
             
-            // Add lights
-            const ambientLight = new THREE.AmbientLight(0x404040);
-            scene.add(ambientLight);
-            
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-            directionalLight.position.set(5, 5, 5);
-            directionalLight.castShadow = true;
-            scene.add(directionalLight);
-            lights3D.push(directionalLight);
-            
-            // Add grid
-            const gridHelper = new THREE.GridHelper(10, 10, 0x00ff88, 0x2a2a38);
-            scene.add(gridHelper);
-            
-            // Mouse controls
-            let isDragging = false;
-            let previousMousePosition = { x: 0, y: 0 };
-            
-            canvas3D.addEventListener('mousedown', (e) => {
-                isDragging = true;
-            });
-            
-            canvas3D.addEventListener('mousemove', (e) => {
-                if(isDragging) {
-                    const deltaX = e.offsetX - previousMousePosition.x;
-                    const deltaY = e.offsetY - previousMousePosition.y;
-                    
-                    camera.position.x += deltaX * 0.01;
-                    camera.position.y -= deltaY * 0.01;
-                    camera.lookAt(scene.position);
-                }
-                previousMousePosition = { x: e.offsetX, y: e.offsetY };
-            });
-            
-            canvas3D.addEventListener('mouseup', () => {
-                isDragging = false;
-            });
-            
-            canvas3D.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                camera.position.z += e.deltaY * 0.01;
-                camera.position.z = Math.max(1, Math.min(20, camera.position.z));
-            });
-        }
-        
-        function add3DShape(type) {
-            let geometry, material, mesh;
-            
-            material = new THREE.MeshPhongMaterial({ 
-                color: Math.random() * 0xffffff,
-                shininess: 100
-            });
-            
-            switch(type) {
-                case 'cube':
-                    geometry = new THREE.BoxGeometry(1, 1, 1);
-                    break;
-                case 'sphere':
-                    geometry = new THREE.SphereGeometry(0.5, 32, 32);
-                    break;
-                case 'cylinder':
-                    geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
-                    break;
-                case 'cone':
-                    geometry = new THREE.ConeGeometry(0.5, 1, 32);
-                    break;
-                case 'torus':
-                    geometry = new THREE.TorusGeometry(0.5, 0.2, 16, 100);
-                    break;
-            }
-            
-            mesh = new THREE.Mesh(geometry, material);
-            mesh.position.set(
-                (Math.random() - 0.5) * 4,
-                (Math.random() - 0.5) * 4,
-                (Math.random() - 0.5) * 4
+            const focusPoint = cameraPos.add(
+                pointOnFocalPlane.sub(cameraPos).normalize().mul(settings.focusDistance)
             );
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
             
-            scene.add(mesh);
-            objects3D.push(mesh);
+            const origin = cameraPos.add(offset);
+            const direction = focusPoint.sub(origin);
             
-            updateStatus('Added ' + type + ' to scene');
+            return new Ray(origin, direction);
         }
         
-        function add3DLight(type) {
-            let light;
+        // Schlick's approximation for reflectance
+        function schlick(cosine, ior) {
+            let r0 = (1 - ior) / (1 + ior);
+            r0 = r0 * r0;
+            return r0 + (1 - r0) * Math.pow(1 - cosine, 5);
+        }
+        
+        // Refract vector
+        function refract(uv, n, etaiOverEtat) {
+            const cosTheta = Math.min(n.mul(-1).dot(uv), 1.0);
+            const rOutPerp = uv.add(n.mul(cosTheta)).mul(etaiOverEtat);
+            const rOutParallel = n.mul(-Math.sqrt(Math.abs(1.0 - rOutPerp.dot(rOutPerp))));
+            return rOutPerp.add(rOutParallel);
+        }
+        
+        // Scene intersection
+        function intersectScene(ray) {
+            let closest = null;
+            let minT = Infinity;
             
-            if(type === 'point') {
-                light = new THREE.PointLight(0xffffff, 1, 100);
-                light.position.set(2, 3, 2);
-            } else {
-                light = new THREE.DirectionalLight(0xffffff, 0.5);
-                light.position.set(-5, 5, -5);
+            for (const obj of scene.objects) {
+                const hit = obj.intersect(ray, 0.001, minT);
+                if (hit && hit.t < minT) {
+                    minT = hit.t;
+                    closest = hit;
+                }
             }
             
-            scene.add(light);
-            lights3D.push(light);
-            updateStatus('Added ' + type + ' light');
+            return closest;
         }
         
-        function toggleRayTrace() {
-            const enabled = document.getElementById('enableRayTrace').checked;
-            renderer.shadowMap.enabled = enabled;
-            updateStatus('Ray tracing ' + (enabled ? 'enabled' : 'disabled'));
-        }
-        
-        function animate3D() {
-            if(currentMode !== '3d') return;
+        // Volumetric scattering
+        function volumetricScatter(ray, tMax) {
+            if (settings.volumetricDensity <= 0) return null;
             
-            requestAnimationFrame(animate3D);
+            const scatterDist = -Math.log(random()) / settings.volumetricDensity;
             
-            objects3D.forEach(obj => {
-                obj.rotation.x += 0.005;
-                obj.rotation.y += 0.005;
-            });
-            
-            renderer.render(scene, camera);
-        }
-        
-        // AI Processing (simulated)
-        function applyNeuralStyle(style) {
-            if(!image) {
-                alert('Please load an image first');
-                return;
+            if (scatterDist < tMax) {
+                return {
+                    point: ray.at(scatterDist),
+                    scattered: true
+                };
             }
             
-            showModal('Neural Style Transfer', 'Applying ' + style + ' style...');
+            return null;
+        }
+        
+        // Main ray tracing function
+        function traceRay(ray, depth) {
+            if (depth <= 0) {
+                return new Vec3(0, 0, 0);
+            }
             
-            setTimeout(() => {
-                saveHistory();
+            const hit = intersectScene(ray);
+            
+            if (!hit) {
+                // Sky color
+                const t = 0.5 * (ray.direction.y + 1.0);
+                return new Vec3(0.3, 0.5, 0.8).mul(1 - t).add(new Vec3(0.8, 0.9, 1.0).mul(t)).mul(0.3);
+            }
+            
+            const mat = hit.material;
+            
+            // Emissive material
+            if (mat.type === MaterialType.EMISSIVE) {
+                return mat.emission;
+            }
+            
+            // Check for volumetric scattering before surface
+            const volumeScatter = volumetricScatter(ray, hit.t);
+            if (volumeScatter && volumeScatter.scattered) {
+                const scatterDir = randomUnitVector();
+                const newRay = new Ray(volumeScatter.point, scatterDir);
+                return traceRay(newRay, depth - 1).mul(0.8);
+            }
+            
+            let scattered;
+            let attenuation;
+            
+            // Material scattering
+            if (mat.type === MaterialType.DIFFUSE) {
+                // Diffuse/Lambertian
+                const scatterDir = hit.normal.add(randomUnitVector());
+                scattered = new Ray(hit.point, scatterDir);
+                attenuation = mat.albedo;
                 
-                // Simulate style transfer with filters
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imageData.data;
+            } else if (mat.type === MaterialType.METAL) {
+                // Metal with roughness
+                const reflected = ray.direction.reflect(hit.normal);
+                const scattered_dir = reflected.add(randomInUnitSphere().mul(mat.roughness));
+                scattered = new Ray(hit.point, scattered_dir);
+                attenuation = mat.albedo;
                 
-                switch(style) {
-                    case 'impressionist':
-                        for(let i = 0; i < data.length; i += 4) {
-                            data[i] = Math.min(255, data[i] * 1.2 + 20);
-                            data[i+1] = Math.min(255, data[i+1] * 1.1 + 10);
-                            data[i+2] = Math.min(255, data[i+2] * 0.9);
-                        }
-                        break;
-                    case 'abstract':
-                        applyConvolution(imageData, [
-                            2, -1, 2,
-                            -1, 1, -1,
-                            2, -1, 2
-                        ]);
-                        break;
-                    case 'sketch':
-                        applyConvolution(imageData, [
-                            -1, -1, -1,
-                            -1, 9, -1,
-                            -1, -1, -1
-                        ]);
-                        for(let i = 0; i < data.length; i += 4) {
-                            const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-                            data[i] = data[i+1] = data[i+2] = avg > 128 ? 255 : 0;
-                        }
-                        break;
+                if (scattered.direction.dot(hit.normal) <= 0) {
+                    return new Vec3(0, 0, 0);
                 }
                 
-                ctx.putImageData(imageData, 0, 0);
-                closeModal();
-                updateStatus('Applied ' + style + ' neural style');
-            }, 1500);
-        }
-        
-        function applyAI(type) {
-            if(!image) {
-                alert('Please load an image first');
-                return;
-            }
-            
-            showModal('AI Processing', 'Applying ' + type + '...');
-            
-            setTimeout(() => {
-                saveHistory();
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imageData.data;
+            } else if (mat.type === MaterialType.GLASS) {
+                // Glass/Dielectric
+                attenuation = mat.albedo;
+                const refractionRatio = hit.normal.dot(ray.direction) < 0 ? 1.0 / mat.ior : mat.ior;
                 
-                switch(type) {
-                    case 'denoise':
-                        applyConvolution(imageData, [
-                            1/16, 2/16, 1/16,
-                            2/16, 4/16, 2/16,
-                            1/16, 2/16, 1/16
-                        ]);
-                        break;
-                    case 'upscale':
-                        // Simulated upscaling
-                        const newCanvas = document.createElement('canvas');
-                        newCanvas.width = canvas.width * 2;
-                        newCanvas.height = canvas.height * 2;
-                        const newCtx = newCanvas.getContext('2d');
-                        newCtx.imageSmoothingEnabled = true;
-                        newCtx.imageSmoothingQuality = 'high';
-                        newCtx.drawImage(canvas, 0, 0, newCanvas.width, newCanvas.height);
-                        canvas.width = newCanvas.width;
-                        canvas.height = newCanvas.height;
-                        ctx.drawImage(newCanvas, 0, 0);
-                        break;
-                    case 'superres':
-                        applyConvolution(imageData, [
-                            0, -1, 0,
-                            -1, 5, -1,
-                            0, -1, 0
-                        ]);
-                        break;
-                    case 'background':
-                        // Simple background removal simulation
-                        for(let i = 0; i < data.length; i += 4) {
-                            const brightness = (data[i] + data[i+1] + data[i+2]) / 3;
-                            if(brightness > 200 || brightness < 50) {
-                                data[i+3] = 0;
-                            }
-                        }
-                        ctx.putImageData(imageData, 0, 0);
-                        break;
+                const unitDir = ray.direction.normalize();
+                const cosTheta = Math.min(hit.normal.mul(-1).dot(unitDir), 1.0);
+                const sinTheta = Math.sqrt(1.0 - cosTheta * cosTheta);
+                
+                const cannotRefract = refractionRatio * sinTheta > 1.0;
+                let direction;
+                
+                if (cannotRefract || schlick(cosTheta, refractionRatio) > random()) {
+                    direction = unitDir.reflect(hit.normal);
+                } else {
+                    direction = refract(unitDir, hit.normal, refractionRatio);
                 }
                 
-                closeModal();
-                updateStatus('Applied AI ' + type);
-            }, 2000);
-        }
-        
-        // Utility functions
-        function saveHistory() {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            historyStack.push(imageData);
-            if(historyStack.length > 20) historyStack.shift();
-        }
-        
-        function undoLast() {
-            if(historyStack.length > 0) {
-                const previous = historyStack.pop();
-                ctx.putImageData(previous, 0, 0);
-                updateStatus('Undo applied');
+                scattered = new Ray(hit.point, direction);
             }
+            
+            // Recursive ray tracing
+            const incomingLight = traceRay(scattered, depth - 1);
+            return incomingLight.mulVec(attenuation);
         }
         
-        function resetCanvas() {
-            if(image) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-                historyStack = [];
-                updateStatus('Canvas reset');
+        // Render one sample with chromatic aberration
+        function renderPixelWithCA(x, y) {
+            // RGB chromatic aberration - slightly offset rays for each channel
+            const rRay = getCameraRay(x + random() - 0.5, y + random() - 0.5, -1);
+            const gRay = getCameraRay(x + random() - 0.5, y + random() - 0.5, 0);
+            const bRay = getCameraRay(x + random() - 0.5, y + random() - 0.5, 1);
+            
+            const rColor = traceRay(rRay, settings.maxBounces);
+            const gColor = traceRay(gRay, settings.maxBounces);
+            const bColor = traceRay(bRay, settings.maxBounces);
+            
+            return new Vec3(rColor.x, gColor.y, bColor.z);
+        }
+        
+        // Render frame
+        function render() {
+            const startTime = performance.now();
+            
+            for (let s = 0; s < settings.samplesPerFrame; s++) {
+                for (let y = 0; y < HEIGHT; y++) {
+                    for (let x = 0; x < WIDTH; x++) {
+                        const idx = (y * WIDTH + x) * 3;
+                        
+                        const color = renderPixelWithCA(x, y);
+                        
+                        accumBuffer[idx] += color.x;
+                        accumBuffer[idx + 1] += color.y;
+                        accumBuffer[idx + 2] += color.z;
+                    }
+                }
             }
+            
+            frameCount++;
+            
+            // Update display
+            for (let y = 0; y < HEIGHT; y++) {
+                for (let x = 0; x < WIDTH; x++) {
+                    const idx = (y * WIDTH + x) * 3;
+                    const pixelIdx = (y * WIDTH + x) * 4;
+                    
+                    const scale = 1.0 / frameCount;
+                    
+                    // Tone mapping and gamma correction
+                    let r = Math.sqrt(accumBuffer[idx] * scale);
+                    let g = Math.sqrt(accumBuffer[idx + 1] * scale);
+                    let b = Math.sqrt(accumBuffer[idx + 2] * scale);
+                    
+                    imageData.data[pixelIdx] = Math.min(255, r * 255);
+                    imageData.data[pixelIdx + 1] = Math.min(255, g * 255);
+                    imageData.data[pixelIdx + 2] = Math.min(255, b * 255);
+                    imageData.data[pixelIdx + 3] = 255;
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            
+            // Update stats
+            const currentTime = performance.now();
+            fps = 1000 / (currentTime - lastTime);
+            lastTime = currentTime;
+            
+            document.getElementById('frameCount').textContent = frameCount;
+            document.getElementById('fps').textContent = fps.toFixed(1);
+            
+            requestAnimationFrame(render);
         }
         
-        function downloadCanvas() {
-            const link = document.createElement('a');
-            link.download = 'cgi-studio-export-' + Date.now() + '.png';
-            link.href = currentMode === '3d' ? 
-                document.getElementById('preview3D').toDataURL() :
-                canvas.toDataURL();
-            link.click();
-            updateStatus('Image exported');
+        // Reset accumulation
+        function resetAccumulation() {
+            frameCount = 0;
+            accumBuffer.fill(0);
         }
         
-        function hexToRgb(hex) {
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? {
-                r: parseInt(result[1], 16),
-                g: parseInt(result[2], 16),
-                b: parseInt(result[3], 16)
-            } : null;
-        }
+        // UI Controls
+        document.getElementById('samples').addEventListener('input', (e) => {
+            settings.samplesPerFrame = parseInt(e.target.value);
+            document.getElementById('samplesValue').textContent = settings.samplesPerFrame;
+            resetAccumulation();
+        });
         
-        function showModal(title, body) {
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalBody').innerHTML = '<div class="spinner"></div><p style="text-align:center; margin-top:1rem;">' + body + '</p>';
-            document.getElementById('modal').style.display = 'flex';
-        }
+        document.getElementById('bounces').addEventListener('input', (e) => {
+            settings.maxBounces = parseInt(e.target.value);
+            document.getElementById('bouncesValue').textContent = settings.maxBounces;
+            resetAccumulation();
+        });
         
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
+        document.getElementById('aperture').addEventListener('input', (e) => {
+            settings.aperture = parseFloat(e.target.value);
+            document.getElementById('apertureValue').textContent = settings.aperture.toFixed(2);
+            resetAccumulation();
+        });
         
-        function updateStatus(text) {
-            document.getElementById('statusText').textContent = text;
-        }
+        document.getElementById('focus').addEventListener('input', (e) => {
+            settings.focusDistance = parseFloat(e.target.value);
+            document.getElementById('focusValue').textContent = settings.focusDistance.toFixed(1);
+            resetAccumulation();
+        });
         
-        function updateInfo(text) {
-            document.getElementById('infoText').textContent = text;
-        }
+        document.getElementById('aberration').addEventListener('input', (e) => {
+            settings.chromaticAberration = parseFloat(e.target.value);
+            document.getElementById('aberrationValue').textContent = settings.chromaticAberration.toFixed(3);
+            resetAccumulation();
+        });
         
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-        }
+        document.getElementById('volume').addEventListener('input', (e) => {
+            settings.volumetricDensity = parseFloat(e.target.value);
+            document.getElementById('volumeValue').textContent = settings.volumetricDensity.toFixed(2);
+            resetAccumulation();
+        });
+        
+        document.getElementById('rotation').addEventListener('input', (e) => {
+            settings.cameraRotation = parseFloat(e.target.value);
+            document.getElementById('rotationValue').textContent = settings.cameraRotation.toFixed(1);
+            resetAccumulation();
+        });
+        
+        document.getElementById('reset').addEventListener('click', resetAccumulation);
+        
+        // Initialize
+        document.getElementById('resolution').textContent = `${WIDTH}x${HEIGHT}`;
+        render();
     </script>
 </body>
 </html>
