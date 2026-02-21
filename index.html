@@ -1,686 +1,1258 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Path Tracer</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            background: #1a1a1a;
-            color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #container {
-            max-width: 1200px;
-            width: 100%;
-        }
-        canvas {
-            width: 100%;
-            height: auto;
-            border: 2px solid #333;
-            border-radius: 8px;
-            image-rendering: pixelated;
-        }
-        .controls {
-            margin-top: 20px;
-            padding: 20px;
-            background: #2a2a2a;
-            border-radius: 8px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-        }
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        label {
-            font-size: 12px;
-            color: #aaa;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        input[type="range"] {
-            width: 100%;
-        }
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-        }
-        button {
-            padding: 12px 24px;
-            background: #4a9eff;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background: #3a8eef;
-        }
-        .stats {
-            margin-top: 10px;
-            padding: 15px;
-            background: #2a2a2a;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #aaa;
-        }
-        .value {
-            color: #4a9eff;
-            font-weight: bold;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        .description {
-            text-align: center;
-            color: #888;
-            margin-bottom: 20px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rbxm2sl</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green: #00ff41;
+  --green-dim: #00aa2a;
+  --green-faint: rgba(0,255,65,0.06);
+  --amber: #ffb000;
+  --red: #ff3131;
+  --bg: #020c02;
+  --surface: #030f03;
+  --border: #0a2a0a;
+  --text: #ccffcc;
+  --muted: #3a6b3a;
+  --mono: 'Share Tech Mono', monospace;
+  --vt: 'VT323', monospace;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--green);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* CRT scanlines overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.15) 2px,
+    rgba(0,0,0,0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* CRT screen flicker */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0,255,65,0.015);
+  pointer-events: none;
+  z-index: 9997;
+  animation: flicker 8s infinite;
+}
+
+@keyframes flicker {
+  0%,100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.7; }
+  94% { opacity: 1; }
+  96% { opacity: 0.85; }
+  97% { opacity: 1; }
+}
+
+/* Phosphor glow on text */
+.glow { text-shadow: 0 0 8px var(--green), 0 0 20px rgba(0,255,65,0.4); }
+.amber { color: var(--amber); text-shadow: 0 0 8px var(--amber); }
+.red   { color: var(--red);   text-shadow: 0 0 8px var(--red); }
+.dim   { color: var(--muted); }
+.bright { color: #fff; text-shadow: 0 0 6px var(--green); }
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ── TOP BAR ── */
+#topbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+}
+
+.topbar-title {
+  font-family: var(--vt);
+  font-size: 22px;
+  color: var(--green);
+  text-shadow: 0 0 12px var(--green), 0 0 30px rgba(0,255,65,0.3);
+  letter-spacing: 0.08em;
+}
+
+.topbar-meta { color: var(--muted); font-size: 11px; }
+.topbar-meta span { color: var(--green-dim); }
+
+/* ── MAIN LAYOUT ── */
+#main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── TERMINAL PANE ── */
+#terminal {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  scroll-behavior: smooth;
+}
+
+#terminal::-webkit-scrollbar { width: 4px; }
+#terminal::-webkit-scrollbar-track { background: var(--bg); }
+#terminal::-webkit-scrollbar-thumb { background: var(--green-dim); }
+
+.line {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 2px;
+  opacity: 0;
+  animation: appear 0.05s forwards;
+}
+
+@keyframes appear { to { opacity: 1; } }
+
+.prompt { color: var(--green-dim); flex-shrink: 0; }
+.line-text { word-break: break-all; }
+
+/* ── OUTPUT PANEL ── */
+#output-panel {
+  width: 0;
+  overflow: hidden;
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+
+#output-panel.open { width: 48%; }
+
+#output-header {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+#output-header .panel-title {
+  font-family: var(--vt);
+  font-size: 20px;
+  color: var(--amber);
+  text-shadow: 0 0 10px var(--amber);
+}
+
+#output-actions { display: flex; gap: 8px; }
+
+.btn {
+  background: transparent;
+  border: 1px solid var(--green-dim);
+  color: var(--green);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 12px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.15s;
+  text-transform: uppercase;
+}
+
+.btn:hover {
+  background: var(--green-faint);
+  border-color: var(--green);
+  text-shadow: 0 0 6px var(--green);
+  box-shadow: 0 0 12px rgba(0,255,65,0.15);
+}
+
+.btn.amber-btn {
+  border-color: rgba(255,176,0,0.4);
+  color: var(--amber);
+}
+.btn.amber-btn:hover {
+  background: rgba(255,176,0,0.06);
+  border-color: var(--amber);
+  text-shadow: 0 0 6px var(--amber);
+}
+
+#output-code {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: #aaffaa;
+  white-space: pre;
+  word-break: break-all;
+  overflow-x: auto;
+}
+
+#output-code::-webkit-scrollbar { width: 4px; height: 4px; }
+#output-code::-webkit-scrollbar-track { background: var(--bg); }
+#output-code::-webkit-scrollbar-thumb { background: var(--green-dim); }
+
+/* ── BOTTOM INPUT BAR ── */
+#bottom {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+#drop-zone {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+}
+
+#drop-zone:hover, #drop-zone.dragover {
+  background: var(--green-faint);
+}
+
+#drop-zone input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.drop-arrow {
+  font-family: var(--vt);
+  font-size: 24px;
+  color: var(--green);
+  text-shadow: 0 0 10px var(--green);
+  animation: blink-cur 1s step-end infinite;
+}
+
+@keyframes blink-cur {
+  50% { opacity: 0; }
+}
+
+.drop-text { color: var(--muted); font-size: 13px; }
+.drop-text strong { color: var(--green); }
+.drop-filename { margin-left: auto; font-size: 11px; color: var(--green-dim); }
+
+/* ── CURSOR ── */
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  background: var(--green);
+  vertical-align: middle;
+  animation: blink-cur 1s step-end infinite;
+  box-shadow: 0 0 6px var(--green);
+}
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  display: inline-flex;
+  gap: 2px;
+  font-size: 12px;
+}
+.progress-bar span { color: var(--green); }
+.progress-bar .empty { color: var(--border); }
+
+/* ── BOOT SCREEN ── */
+#boot-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--vt);
+  transition: opacity 0.5s;
+}
+
+#boot-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+.boot-logo {
+  font-size: clamp(48px, 10vw, 96px);
+  color: var(--green);
+  text-shadow: 0 0 20px var(--green), 0 0 60px rgba(0,255,65,0.4);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.boot-sub {
+  font-size: 20px;
+  color: var(--muted);
+  letter-spacing: 0.3em;
+  margin-bottom: 48px;
+}
+
+.boot-lines {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--green-dim);
+  text-align: left;
+  width: min(480px, 90vw);
+  min-height: 160px;
+}
+
+.boot-line { margin-bottom: 3px; }
+.boot-line .ok  { color: var(--green); }
+.boot-line .warn { color: var(--amber); }
+
+.boot-bar {
+  margin-top: 32px;
+  width: min(480px, 90vw);
+  height: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.boot-bar-fill {
+  height: 100%;
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green);
+  width: 0%;
+  transition: width 0.05s linear;
+}
+</style>
 </head>
 <body>
-    <div id="container">
-        <h1>Advanced Path Tracer</h1>
-        <p class="description">Real-time path tracing with depth of field, chromatic aberration, volumetric lighting & soft shadows</p>
-        
-        <canvas id="canvas"></canvas>
-        
-        <div class="controls">
-            <div class="control-group">
-                <label>Samples Per Frame: <span class="value" id="samplesValue">1</span></label>
-                <input type="range" id="samples" min="1" max="4" value="1">
-            </div>
-            
-            <div class="control-group">
-                <label>Max Bounces: <span class="value" id="bouncesValue">5</span></label>
-                <input type="range" id="bounces" min="2" max="10" value="5">
-            </div>
-            
-            <div class="control-group">
-                <label>Aperture (DOF): <span class="value" id="apertureValue">0.15</span></label>
-                <input type="range" id="aperture" min="0" max="0.5" step="0.01" value="0.15">
-            </div>
-            
-            <div class="control-group">
-                <label>Focus Distance: <span class="value" id="focusValue">8.0</span></label>
-                <input type="range" id="focus" min="3" max="15" step="0.1" value="8.0">
-            </div>
-            
-            <div class="control-group">
-                <label>Chromatic Aberration: <span class="value" id="aberrationValue">0.02</span></label>
-                <input type="range" id="aberration" min="0" max="0.1" step="0.005" value="0.02">
-            </div>
-            
-            <div class="control-group">
-                <label>Volumetric Density: <span class="value" id="volumeValue">0.05</span></label>
-                <input type="range" id="volume" min="0" max="0.2" step="0.01" value="0.05">
-            </div>
-            
-            <div class="control-group">
-                <label>Camera Rotation: <span class="value" id="rotationValue">0.0</span></label>
-                <input type="range" id="rotation" min="0" max="6.28" step="0.1" value="0">
-            </div>
-            
-            <div class="control-group">
-                <button id="reset">Reset Accumulation</button>
-            </div>
+
+<!-- BOOT OVERLAY -->
+<div id="boot-overlay">
+  <div class="boot-logo">rbxm2sl</div>
+  <div class="boot-sub">ROBLOX MODEL → LOCALSCRIPT</div>
+  <div class="boot-lines" id="boot-lines"></div>
+  <div class="boot-bar"><div class="boot-bar-fill" id="boot-bar-fill"></div></div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="opacity:0;transition:opacity 0.5s;">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <span class="topbar-title glow">rbxm2sl</span>
+    <span class="topbar-meta">
+      SYS:<span>OK</span> &nbsp;|&nbsp;
+      VER:<span>1.0.0</span> &nbsp;|&nbsp;
+      MODE:<span>PARSE</span>
+    </span>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- TERMINAL -->
+    <div id="terminal" aria-live="polite"></div>
+
+    <!-- OUTPUT PANEL -->
+    <div id="output-panel">
+      <div id="output-header">
+        <span class="panel-title">OUTPUT.LUA</span>
+        <div id="output-actions">
+          <button class="btn amber-btn" onclick="downloadScript()">SAVE .LUA</button>
+          <button class="btn" onclick="copyScript()">COPY</button>
         </div>
-        
-        <div class="stats">
-            <div>Frame: <span class="value" id="frameCount">0</span></div>
-            <div>FPS: <span class="value" id="fps">0</span></div>
-            <div>Resolution: <span class="value" id="resolution">800x600</span></div>
-        </div>
+      </div>
+      <div id="output-code"></div>
     </div>
 
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Settings
-        const WIDTH = 800;
-        const HEIGHT = 600;
-        canvas.width = WIDTH;
-        canvas.height = HEIGHT;
-        
-        let settings = {
-            samplesPerFrame: 1,
-            maxBounces: 5,
-            aperture: 0.15,
-            focusDistance: 8.0,
-            chromaticAberration: 0.02,
-            volumetricDensity: 0.05,
-            cameraRotation: 0.0
+  </div>
+
+  <!-- BOTTOM / DROP ZONE -->
+  <div id="bottom">
+    <div id="drop-zone" id="drop-zone">
+      <input type="file" accept=".rbxm,.rbxmx" id="file-input" onchange="handleFile(this.files[0])">
+      <span class="drop-arrow">▶</span>
+      <span class="drop-text"><strong>DROP .RBXM FILE</strong> or click to browse</span>
+      <span class="drop-filename" id="drop-filename"></span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  BOOT SEQUENCE
+// ═══════════════════════════════════════════════════════════
+const bootMessages = [
+  ['init', 'Initializing rbxm2sl runtime...', 'ok'],
+  ['sys', 'Loading binary parser module...', 'ok'],
+  ['sys', 'Mounting RBXM chunk decoder...', 'ok'],
+  ['sys', 'Loading instance serializer...', 'ok'],
+  ['sys', 'Preparing Lua codegen engine...', 'ok'],
+  ['sys', 'Checking browser FileReader API...', 'ok'],
+  ['sys', 'Allocating parse buffer (16MB)...', 'ok'],
+  ['warn', 'No GPU acceleration (pure JS mode)', 'warn'],
+  ['sys', 'Terminal renderer online...', 'ok'],
+  ['sys', 'Drop zone listener attached...', 'ok'],
+  ['sys', 'All systems nominal. Ready.', 'ok'],
+];
+
+async function runBoot() {
+  const bootEl = document.getElementById('boot-lines');
+  const bar = document.getElementById('boot-bar-fill');
+
+  for (let i = 0; i < bootMessages.length; i++) {
+    const [, msg, status] = bootMessages[i];
+    await sleep(60 + Math.random() * 80);
+    const div = document.createElement('div');
+    div.className = 'boot-line';
+    const icon = status === 'ok' ? `<span class="ok">[ OK ]</span>` : `<span class="warn">[ WARN ]</span>`;
+    div.innerHTML = `${icon} ${msg}`;
+    bootEl.appendChild(div);
+    bar.style.width = ((i + 1) / bootMessages.length * 100) + '%';
+  }
+
+  await sleep(400);
+  document.getElementById('boot-overlay').classList.add('fade-out');
+  document.getElementById('app').style.opacity = '1';
+  await sleep(600);
+  document.getElementById('boot-overlay').remove();
+  startTerminal();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TERMINAL ENGINE
+// ═══════════════════════════════════════════════════════════
+const terminal = document.getElementById('terminal');
+let lineDelay = 0;
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function writeLine(text, cls='', promptStr='rbxm2sl$', delay=0) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = 'line';
+      const p = document.createElement('span');
+      p.className = 'prompt dim';
+      p.textContent = promptStr;
+      const t = document.createElement('span');
+      t.className = 'line-text ' + cls;
+      t.innerHTML = text;
+      div.appendChild(p);
+      div.appendChild(t);
+      terminal.appendChild(div);
+      terminal.scrollTop = terminal.scrollHeight;
+      resolve();
+    }, delay);
+  });
+}
+
+function writeBlank() { return writeLine('&nbsp;', '', ''); }
+
+async function startTerminal() {
+  await writeLine('<span class="glow bright">rbxm2sl v1.0.0</span> — RBXM to LocalScript Converter', '', '', 0);
+  await writeLine('Type: Drop a <span class="amber">.rbxm</span> or <span class="amber">.rbxmx</span> file into the bar below.', 'dim', '', 80);
+  await writeBlank();
+  await writeLine('Waiting for file input...', 'dim', '', 120);
+  appendCursorLine();
+}
+
+let cursorLine = null;
+function appendCursorLine() {
+  if (cursorLine) cursorLine.remove();
+  cursorLine = document.createElement('div');
+  cursorLine.className = 'line';
+  cursorLine.innerHTML = `<span class="prompt dim">rbxm2sl$</span><span class="line-text"><span class="cursor"></span></span>`;
+  terminal.appendChild(cursorLine);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+function removeCursor() {
+  if (cursorLine) { cursorLine.remove(); cursorLine = null; }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DRAG & DROP
+// ═══════════════════════════════════════════════════════════
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+
+// ═══════════════════════════════════════════════════════════
+//  FILE HANDLER
+// ═══════════════════════════════════════════════════════════
+let generatedScript = '';
+
+async function handleFile(file) {
+  if (!file) return;
+  document.getElementById('drop-filename').textContent = file.name;
+  removeCursor();
+
+  await writeBlank();
+  await writeLine(`<span class="amber">FILE:</span> ${file.name} (${formatBytes(file.size)})`, '');
+  await writeLine('Reading binary data...', 'dim');
+
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+
+  await writeLine('Validating RBXM magic header...', 'dim');
+  await sleep(80);
+
+  // Check magic
+  const magic = String.fromCharCode(...bytes.slice(0, 8));
+  const isXML = magic.startsWith('<roblox');
+  const isBin = magic.startsWith('<roblox!');
+
+  if (!magic.startsWith('<roblox')) {
+    await writeLine('<span class="red">ERROR: Not a valid RBXM/RBXMX file.</span>', '');
+    appendCursorLine();
+    return;
+  }
+
+  if (isXML && !isBin) {
+    await writeLine('<span class="amber">Detected: RBXMX (XML format)</span>', '');
+    await writeLine('Parsing XML structure...', 'dim');
+    await sleep(100);
+    try {
+      const text = new TextDecoder().decode(bytes);
+      const result = parseRBXMX(text);
+      await finishParse(result);
+    } catch(e) {
+      await writeLine(`<span class="red">XML parse error: ${e.message}</span>`, '');
+      appendCursorLine();
+    }
+    return;
+  }
+
+  await writeLine('<span class="glow">Detected: RBXM (binary format)</span>', '');
+  await sleep(80);
+
+  try {
+    const result = parseRBXMBinary(bytes);
+    await finishParse(result);
+  } catch(e) {
+    await writeLine(`<span class="red">Binary parse error: ${e.message}</span>`, '');
+    await writeLine('<span class="dim">Falling back to heuristic extraction...</span>', '');
+    try {
+      const text = new TextDecoder('utf-8', {fatal:false}).decode(bytes);
+      const result = heuristicParse(text, file.name);
+      await finishParse(result);
+    } catch(e2) {
+      await writeLine(`<span class="red">All parsers failed: ${e2.message}</span>`, '');
+      appendCursorLine();
+    }
+  }
+}
+
+async function finishParse(result) {
+  await writeLine(`Instances found: <span class="bright">${result.instances.length}</span>`, '');
+  await writeLine(`Scripts found:   <span class="bright">${result.scripts.length}</span>`, '');
+  await writeLine(`Properties:      <span class="bright">${result.propCount}</span>`, '');
+  await sleep(80);
+
+  await writeLine('Generating LocalScript...', 'dim');
+  await sleep(150);
+
+  const lua = generateLocalScript(result);
+  generatedScript = lua;
+
+  const lines = lua.split('\n').length;
+  await writeLine(`Codegen complete. <span class="glow bright">${lines} lines</span> generated.`, '');
+  await writeBlank();
+  await writeLine('<span class="glow">✓ SUCCESS — Output ready in panel →</span>', '');
+  await writeBlank();
+  await writeLine('<span class="dim">Drop another file to convert again.</span>', '');
+
+  // Show output panel
+  document.getElementById('output-code').textContent = lua;
+  document.getElementById('output-panel').classList.add('open');
+
+  appendCursorLine();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RBXMX (XML) PARSER
+// ═══════════════════════════════════════════════════════════
+function parseRBXMX(text) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, 'text/xml');
+  const instances = [];
+  const scripts = [];
+  let propCount = 0;
+
+  function walkItem(el, parentName) {
+    const cls = el.getAttribute('class') || 'Unknown';
+    const props = {};
+    let name = cls;
+
+    // Read Properties
+    const propsEl = el.querySelector(':scope > Properties');
+    if (propsEl) {
+      for (const child of propsEl.children) {
+        const pname = child.getAttribute('name');
+        let val = child.textContent.trim();
+        // For token/enum, store numeric val
+        props[pname] = { type: child.tagName, value: val, raw: child };
+        propCount++;
+      }
+    }
+
+    if (props['Name']) name = props['Name'].value;
+
+    const inst = { cls, name, props, children: [], parentName };
+    instances.push(inst);
+
+    // Scripts
+    if (cls === 'Script' || cls === 'LocalScript' || cls === 'ModuleScript') {
+      const sourceNode = propsEl && propsEl.querySelector('[name="Source"]');
+      const source = sourceNode ? sourceNode.textContent : '';
+      scripts.push({ name, cls, source });
+      inst.source = source;
+    }
+
+    // Children
+    for (const child of el.children) {
+      if (child.tagName === 'Item') {
+        walkItem(child, name);
+        inst.children.push(child.getAttribute('class'));
+      }
+    }
+
+    return inst;
+  }
+
+  const items = doc.querySelectorAll('roblox > Item');
+  for (const item of items) walkItem(item, 'ROOT');
+
+  return { instances, scripts, propCount };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RBXM BINARY PARSER
+// ═══════════════════════════════════════════════════════════
+function parseRBXMBinary(bytes) {
+  // Roblox binary format:
+  // Magic: "<roblox!\x89\xff\x0d\x0a\x1a\x0a\x00\x00"
+  // Then chunks: [type 4b][compressed_len 4b][decompressed_len 4b][reserved 4b][data]
+  // Chunk types: META, SSTR, INST, PROP, PRNT, END
+
+  const instances = [];
+  const scripts = [];
+  let propCount = 0;
+
+  let pos = 0;
+  const view = new DataView(bytes.buffer);
+
+  function readU32() { const v = view.getUint32(pos, true); pos += 4; return v; }
+  function readI32() { const v = view.getInt32(pos, true); pos += 4; return v; }
+  function readBytes(n) { const s = bytes.slice(pos, pos+n); pos += n; return s; }
+  function readStr(n) { return new TextDecoder().decode(readBytes(n)); }
+  function readLEU32() { return readU32(); }
+
+  // Skip 16-byte header: magic(8) + classCount(2) + instanceCount(2) + reserved(8)? 
+  // Actual header: magic 14 bytes + num_classes(4) + num_instances(4) + num_instances2(4) + reserved(8)
+  pos = 0;
+  // magic is 14 bytes: "<roblox!\x89\xff\x0d\x0a\x1a\x0a"
+  // But let's just scan for chunk headers after the fixed header
+  pos = 32; // skip header area
+
+  const classMap = {}; // classId -> className
+  const instMap = {};  // referentId -> instance
+  const instList = []; // ordered
+  const sharedStrings = [];
+
+  function lz4Decompress(src, decompSize) {
+    // LZ4 block decompression
+    const dst = new Uint8Array(decompSize);
+    let s = 0, d = 0;
+    while (s < src.length) {
+      const token = src[s++];
+      let litLen = (token >> 4) & 0xf;
+      if (litLen === 15) { let x; do { x = src[s++]; litLen += x; } while(x === 255); }
+      dst.set(src.slice(s, s + litLen), d);
+      s += litLen; d += litLen;
+      if (s >= src.length) break;
+      const offset = src[s] | (src[s+1] << 8); s += 2;
+      let matchLen = (token & 0xf) + 4;
+      if (matchLen - 4 === 15) { let x; do { x = src[s++]; matchLen += x; } while(x === 255); }
+      let cp = d - offset;
+      for (let i = 0; i < matchLen; i++) dst[d++] = dst[cp++];
+    }
+    return dst;
+  }
+
+  function readChunk() {
+    if (pos + 16 > bytes.length) return null;
+    const type = readStr(4);
+    const compLen = readLEU32();
+    const decompLen = readLEU32();
+    readLEU32(); // reserved
+    const data = readBytes(compLen);
+
+    let raw;
+    if (compLen === 0 || decompLen === 0) {
+      raw = data;
+    } else if (compLen === decompLen) {
+      raw = data; // uncompressed
+    } else {
+      try { raw = lz4Decompress(data, decompLen); }
+      catch(e) { raw = data; }
+    }
+    return { type, raw };
+  }
+
+  function chunkView(raw) {
+    let p = 0;
+    const v = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
+    return {
+      u8()  { return raw[p++]; },
+      u32() { const x = v.getUint32(p, true); p += 4; return x; },
+      i32() { const x = v.getInt32(p, true); p += 4; return x; },
+      f32() { const x = v.getFloat32(p, true); p += 4; return x; },
+      f64() { const x = v.getFloat64(p, true); p += 8; return x; },
+      str(n) { const s = new TextDecoder().decode(raw.slice(p, p+n)); p += n; return s; },
+      strLen() { const n = v.getUint32(p, true); p += 4; return this.str(n); },
+      bytes(n) { const s = raw.slice(p, p+n); p += n; return s; },
+      remaining() { return raw.length - p; },
+      pos() { return p; },
+      skip(n) { p += n; },
+      eof() { return p >= raw.length; }
+    };
+  }
+
+  // Interleaved int decode (Roblox's custom encoding)
+  function decodeIntArray(raw, count) {
+    const result = new Int32Array(count);
+    // Bytes are interleaved: all byte0 first, then byte1, etc.
+    for (let i = 0; i < count; i++) {
+      const b0 = raw[i];
+      const b1 = raw[i + count];
+      const b2 = raw[i + count * 2];
+      const b3 = raw[i + count * 3];
+      let v = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
+      // Zigzag decode
+      result[i] = (v >>> 1) ^ -(v & 1);
+    }
+    return result;
+  }
+
+  function decodeReferents(raw, count) {
+    const ids = decodeIntArray(raw, count);
+    // Delta decode
+    for (let i = 1; i < count; i++) ids[i] += ids[i-1];
+    return ids;
+  }
+
+  // Parse chunks
+  let chunk;
+  let chunkCount = 0;
+  while (pos < bytes.length - 4 && chunkCount < 1000) {
+    chunkCount++;
+    chunk = readChunk();
+    if (!chunk) break;
+    if (chunk.type === 'END\0') break;
+
+    const cv = chunkView(chunk.raw);
+
+    if (chunk.type === 'SSTR') {
+      // Shared strings
+      try {
+        const count = cv.u32();
+        for (let i = 0; i < count && !cv.eof(); i++) {
+          cv.bytes(16); // MD5
+          const s = cv.strLen();
+          sharedStrings.push(s);
+        }
+      } catch(e) {}
+
+    } else if (chunk.type === 'INST') {
+      try {
+        const classId = cv.u32();
+        const className = cv.strLen();
+        const isService = cv.u8();
+        const count = cv.u32();
+
+        classMap[classId] = className;
+
+        const refBytes = chunk.raw.slice(cv.pos(), cv.pos() + count * 4);
+        const refs = decodeReferents(refBytes, count);
+
+        for (let i = 0; i < count; i++) {
+          const inst = {
+            id: refs[i], cls: className, name: className,
+            props: {}, children: [], parentId: -1
+          };
+          instMap[refs[i]] = inst;
+          instList.push(inst);
+        }
+      } catch(e) {}
+
+    } else if (chunk.type === 'PROP') {
+      try {
+        const classId = cv.u32();
+        const propName = cv.strLen();
+        const typeId = cv.u8();
+        const className = classMap[classId] || 'Unknown';
+
+        // Get all instances of this class
+        const classInsts = instList.filter(i => i.cls === className);
+
+        const readValues = () => {
+          switch(typeId) {
+            case 0x01: { // String
+              return classInsts.map(() => {
+                try { return cv.strLen(); } catch(e) { return ''; }
+              });
+            }
+            case 0x02: { // Bool
+              return classInsts.map(() => { try { return !!cv.u8(); } catch(e) { return false; } });
+            }
+            case 0x03: { // Int32
+              return classInsts.map(() => { try { return cv.i32(); } catch(e) { return 0; } });
+            }
+            case 0x04: { // Float
+              return classInsts.map(() => { try { return cv.f32(); } catch(e) { return 0; } });
+            }
+            case 0x05: { // Double
+              return classInsts.map(() => { try { return cv.f64(); } catch(e) { return 0; } });
+            }
+            case 0x06: { // UDim
+              return classInsts.map(() => { try { return {scale:cv.f32(),offset:cv.i32()}; } catch(e) { return null; } });
+            }
+            case 0x07: { // UDim2
+              return classInsts.map(() => {
+                try {
+                  return {xs:cv.f32(),xo:cv.i32(),ys:cv.f32(),yo:cv.i32()};
+                } catch(e) { return null; }
+              });
+            }
+            case 0x09: { // Color3
+              return classInsts.map(() => {
+                try { return {r:cv.f32(),g:cv.f32(),b:cv.f32()}; } catch(e) { return null; }
+              });
+            }
+            case 0x0D: { // Enum
+              return classInsts.map(() => { try { return cv.u32(); } catch(e) { return 0; } });
+            }
+            default:
+              return classInsts.map(() => null);
+          }
         };
-        
-        let frameCount = 0;
-        let accumBuffer = new Float32Array(WIDTH * HEIGHT * 3);
-        let imageData = ctx.createImageData(WIDTH, HEIGHT);
-        let lastTime = performance.now();
-        let fps = 0;
-        
-        // Vector math utilities
-        class Vec3 {
-            constructor(x = 0, y = 0, z = 0) {
-                this.x = x; this.y = y; this.z = z;
-            }
-            
-            add(v) { return new Vec3(this.x + v.x, this.y + v.y, this.z + v.z); }
-            sub(v) { return new Vec3(this.x - v.x, this.y - v.y, this.z - v.z); }
-            mul(s) { return new Vec3(this.x * s, this.y * s, this.z * s); }
-            mulVec(v) { return new Vec3(this.x * v.x, this.y * v.y, this.z * v.z); }
-            div(s) { return new Vec3(this.x / s, this.y / s, this.z / s); }
-            dot(v) { return this.x * v.x + this.y * v.y + this.z * v.z; }
-            cross(v) {
-                return new Vec3(
-                    this.y * v.z - this.z * v.y,
-                    this.z * v.x - this.x * v.z,
-                    this.x * v.y - this.y * v.x
-                );
-            }
-            length() { return Math.sqrt(this.dot(this)); }
-            normalize() { 
-                const len = this.length();
-                return len > 0 ? this.div(len) : new Vec3(0, 0, 0);
-            }
-            reflect(n) {
-                return this.sub(n.mul(2 * this.dot(n)));
-            }
-        }
-        
-        // Random number generator with seed
-        let seed = Math.random() * 10000;
-        function random() {
-            seed = (seed * 9301 + 49297) % 233280;
-            return seed / 233280;
-        }
-        
-        function randomInUnitDisk() {
-            while (true) {
-                const p = new Vec3(random() * 2 - 1, random() * 2 - 1, 0);
-                if (p.dot(p) < 1) return p;
-            }
-        }
-        
-        function randomInUnitSphere() {
-            while (true) {
-                const p = new Vec3(random() * 2 - 1, random() * 2 - 1, random() * 2 - 1);
-                if (p.dot(p) < 1) return p;
-            }
-        }
-        
-        function randomUnitVector() {
-            return randomInUnitSphere().normalize();
-        }
-        
-        // Ray class
-        class Ray {
-            constructor(origin, direction) {
-                this.origin = origin;
-                this.direction = direction.normalize();
-            }
-            
-            at(t) {
-                return this.origin.add(this.direction.mul(t));
-            }
-        }
-        
-        // Material types
-        const MaterialType = {
-            DIFFUSE: 0,
-            METAL: 1,
-            GLASS: 2,
-            EMISSIVE: 3
-        };
-        
-        // Sphere class
-        class Sphere {
-            constructor(center, radius, material) {
-                this.center = center;
-                this.radius = radius;
-                this.material = material;
-            }
-            
-            intersect(ray, tMin, tMax) {
-                const oc = ray.origin.sub(this.center);
-                const a = ray.direction.dot(ray.direction);
-                const halfB = oc.dot(ray.direction);
-                const c = oc.dot(oc) - this.radius * this.radius;
-                const discriminant = halfB * halfB - a * c;
-                
-                if (discriminant < 0) return null;
-                
-                const sqrtD = Math.sqrt(discriminant);
-                let t = (-halfB - sqrtD) / a;
-                
-                if (t < tMin || t > tMax) {
-                    t = (-halfB + sqrtD) / a;
-                    if (t < tMin || t > tMax) return null;
-                }
-                
-                const point = ray.at(t);
-                const normal = point.sub(this.center).div(this.radius);
-                
-                return {
-                    t: t,
-                    point: point,
-                    normal: normal,
-                    material: this.material
-                };
-            }
-        }
-        
-        // Plane class (infinite)
-        class Plane {
-            constructor(point, normal, material) {
-                this.point = point;
-                this.normal = normal.normalize();
-                this.material = material;
-            }
-            
-            intersect(ray, tMin, tMax) {
-                const denom = this.normal.dot(ray.direction);
-                if (Math.abs(denom) < 1e-6) return null;
-                
-                const t = this.point.sub(ray.origin).dot(this.normal) / denom;
-                if (t < tMin || t > tMax) return null;
-                
-                return {
-                    t: t,
-                    point: ray.at(t),
-                    normal: this.normal,
-                    material: this.material
-                };
-            }
-        }
-        
-        // Scene setup with complex geometry
-        const scene = {
-            objects: [
-                // Ground plane
-                new Plane(
-                    new Vec3(0, -1, 0),
-                    new Vec3(0, 1, 0),
-                    { type: MaterialType.DIFFUSE, albedo: new Vec3(0.8, 0.8, 0.8), roughness: 1.0 }
-                ),
-                
-                // Back wall
-                new Plane(
-                    new Vec3(0, 0, -15),
-                    new Vec3(0, 0, 1),
-                    { type: MaterialType.DIFFUSE, albedo: new Vec3(0.5, 0.5, 0.7), roughness: 1.0 }
-                ),
-                
-                // Left glass sphere
-                new Sphere(
-                    new Vec3(-3, 0.5, -8),
-                    1.5,
-                    { type: MaterialType.GLASS, albedo: new Vec3(1, 1, 1), ior: 1.5 }
-                ),
-                
-                // Center metallic sphere
-                new Sphere(
-                    new Vec3(0, 0, -8),
-                    1.0,
-                    { type: MaterialType.METAL, albedo: new Vec3(1.0, 0.8, 0.5), roughness: 0.1 }
-                ),
-                
-                // Right diffuse sphere
-                new Sphere(
-                    new Vec3(2.5, 0, -7),
-                    1.0,
-                    { type: MaterialType.DIFFUSE, albedo: new Vec3(0.8, 0.2, 0.2), roughness: 1.0 }
-                ),
-                
-                // Small glass ball
-                new Sphere(
-                    new Vec3(-1, -0.3, -5),
-                    0.7,
-                    { type: MaterialType.GLASS, albedo: new Vec3(1, 1, 1), ior: 1.5 }
-                ),
-                
-                // Emissive sphere (light)
-                new Sphere(
-                    new Vec3(4, 5, -8),
-                    2.0,
-                    { type: MaterialType.EMISSIVE, emission: new Vec3(8, 6, 4) }
-                ),
-                
-                // Secondary light
-                new Sphere(
-                    new Vec3(-5, 3, -6),
-                    1.5,
-                    { type: MaterialType.EMISSIVE, emission: new Vec3(2, 4, 8) }
-                ),
-                
-                // Small metal sphere
-                new Sphere(
-                    new Vec3(1.5, -0.5, -5.5),
-                    0.5,
-                    { type: MaterialType.METAL, albedo: new Vec3(0.7, 0.7, 0.9), roughness: 0.3 }
-                ),
-                
-                // Decorative spheres
-                new Sphere(
-                    new Vec3(-2, -0.6, -6),
-                    0.4,
-                    { type: MaterialType.DIFFUSE, albedo: new Vec3(0.2, 0.8, 0.3), roughness: 1.0 }
-                ),
-                
-                new Sphere(
-                    new Vec3(3.5, -0.5, -9),
-                    0.5,
-                    { type: MaterialType.METAL, albedo: new Vec3(0.9, 0.3, 0.3), roughness: 0.2 }
-                )
-            ]
-        };
-        
-        // Camera setup
-        function getCameraRay(x, y, wavelength = 0.0) {
-            const aspect = WIDTH / HEIGHT;
-            const fov = 50 * Math.PI / 180;
-            const viewportHeight = 2.0 * Math.tan(fov / 2);
-            const viewportWidth = aspect * viewportHeight;
-            
-            // Camera position with rotation
-            const angle = settings.cameraRotation;
-            const camX = 5 * Math.sin(angle);
-            const camZ = -2 + 5 * Math.cos(angle);
-            const cameraPos = new Vec3(camX, 2, camZ);
-            const lookAt = new Vec3(0, 0, -8);
-            const vup = new Vec3(0, 1, 0);
-            
-            const w = cameraPos.sub(lookAt).normalize();
-            const u = vup.cross(w).normalize();
-            const v = w.cross(u);
-            
-            const horizontal = u.mul(viewportWidth);
-            const vertical = v.mul(viewportHeight);
-            const lowerLeft = cameraPos
-                .sub(horizontal.div(2))
-                .sub(vertical.div(2))
-                .sub(w);
-            
-            // Depth of field - lens sampling
-            const rd = randomInUnitDisk().mul(settings.aperture);
-            const offset = u.mul(rd.x).add(v.mul(rd.y));
-            
-            const s = x / WIDTH;
-            const t = y / HEIGHT;
-            
-            // Add chromatic aberration offset based on wavelength
-            const aberrationOffset = wavelength * settings.chromaticAberration;
-            const sAberrated = s + aberrationOffset;
-            
-            const pointOnFocalPlane = lowerLeft
-                .add(horizontal.mul(sAberrated))
-                .add(vertical.mul(t));
-            
-            const focusPoint = cameraPos.add(
-                pointOnFocalPlane.sub(cameraPos).normalize().mul(settings.focusDistance)
-            );
-            
-            const origin = cameraPos.add(offset);
-            const direction = focusPoint.sub(origin);
-            
-            return new Ray(origin, direction);
-        }
-        
-        // Schlick's approximation for reflectance
-        function schlick(cosine, ior) {
-            let r0 = (1 - ior) / (1 + ior);
-            r0 = r0 * r0;
-            return r0 + (1 - r0) * Math.pow(1 - cosine, 5);
-        }
-        
-        // Refract vector
-        function refract(uv, n, etaiOverEtat) {
-            const cosTheta = Math.min(n.mul(-1).dot(uv), 1.0);
-            const rOutPerp = uv.add(n.mul(cosTheta)).mul(etaiOverEtat);
-            const rOutParallel = n.mul(-Math.sqrt(Math.abs(1.0 - rOutPerp.dot(rOutPerp))));
-            return rOutPerp.add(rOutParallel);
-        }
-        
-        // Scene intersection
-        function intersectScene(ray) {
-            let closest = null;
-            let minT = Infinity;
-            
-            for (const obj of scene.objects) {
-                const hit = obj.intersect(ray, 0.001, minT);
-                if (hit && hit.t < minT) {
-                    minT = hit.t;
-                    closest = hit;
-                }
-            }
-            
-            return closest;
-        }
-        
-        // Volumetric scattering
-        function volumetricScatter(ray, tMax) {
-            if (settings.volumetricDensity <= 0) return null;
-            
-            const scatterDist = -Math.log(random()) / settings.volumetricDensity;
-            
-            if (scatterDist < tMax) {
-                return {
-                    point: ray.at(scatterDist),
-                    scattered: true
-                };
-            }
-            
-            return null;
-        }
-        
-        // Main ray tracing function
-        function traceRay(ray, depth) {
-            if (depth <= 0) {
-                return new Vec3(0, 0, 0);
-            }
-            
-            const hit = intersectScene(ray);
-            
-            if (!hit) {
-                // Sky color
-                const t = 0.5 * (ray.direction.y + 1.0);
-                return new Vec3(0.3, 0.5, 0.8).mul(1 - t).add(new Vec3(0.8, 0.9, 1.0).mul(t)).mul(0.3);
-            }
-            
-            const mat = hit.material;
-            
-            // Emissive material
-            if (mat.type === MaterialType.EMISSIVE) {
-                return mat.emission;
-            }
-            
-            // Check for volumetric scattering before surface
-            const volumeScatter = volumetricScatter(ray, hit.t);
-            if (volumeScatter && volumeScatter.scattered) {
-                const scatterDir = randomUnitVector();
-                const newRay = new Ray(volumeScatter.point, scatterDir);
-                return traceRay(newRay, depth - 1).mul(0.8);
-            }
-            
-            let scattered;
-            let attenuation;
-            
-            // Material scattering
-            if (mat.type === MaterialType.DIFFUSE) {
-                // Diffuse/Lambertian
-                const scatterDir = hit.normal.add(randomUnitVector());
-                scattered = new Ray(hit.point, scatterDir);
-                attenuation = mat.albedo;
-                
-            } else if (mat.type === MaterialType.METAL) {
-                // Metal with roughness
-                const reflected = ray.direction.reflect(hit.normal);
-                const scattered_dir = reflected.add(randomInUnitSphere().mul(mat.roughness));
-                scattered = new Ray(hit.point, scattered_dir);
-                attenuation = mat.albedo;
-                
-                if (scattered.direction.dot(hit.normal) <= 0) {
-                    return new Vec3(0, 0, 0);
-                }
-                
-            } else if (mat.type === MaterialType.GLASS) {
-                // Glass/Dielectric
-                attenuation = mat.albedo;
-                const refractionRatio = hit.normal.dot(ray.direction) < 0 ? 1.0 / mat.ior : mat.ior;
-                
-                const unitDir = ray.direction.normalize();
-                const cosTheta = Math.min(hit.normal.mul(-1).dot(unitDir), 1.0);
-                const sinTheta = Math.sqrt(1.0 - cosTheta * cosTheta);
-                
-                const cannotRefract = refractionRatio * sinTheta > 1.0;
-                let direction;
-                
-                if (cannotRefract || schlick(cosTheta, refractionRatio) > random()) {
-                    direction = unitDir.reflect(hit.normal);
-                } else {
-                    direction = refract(unitDir, hit.normal, refractionRatio);
-                }
-                
-                scattered = new Ray(hit.point, direction);
-            }
-            
-            // Recursive ray tracing
-            const incomingLight = traceRay(scattered, depth - 1);
-            return incomingLight.mulVec(attenuation);
-        }
-        
-        // Render one sample with chromatic aberration
-        function renderPixelWithCA(x, y) {
-            // RGB chromatic aberration - slightly offset rays for each channel
-            const rRay = getCameraRay(x + random() - 0.5, y + random() - 0.5, -1);
-            const gRay = getCameraRay(x + random() - 0.5, y + random() - 0.5, 0);
-            const bRay = getCameraRay(x + random() - 0.5, y + random() - 0.5, 1);
-            
-            const rColor = traceRay(rRay, settings.maxBounces);
-            const gColor = traceRay(gRay, settings.maxBounces);
-            const bColor = traceRay(bRay, settings.maxBounces);
-            
-            return new Vec3(rColor.x, gColor.y, bColor.z);
-        }
-        
-        // Render frame
-        function render() {
-            const startTime = performance.now();
-            
-            for (let s = 0; s < settings.samplesPerFrame; s++) {
-                for (let y = 0; y < HEIGHT; y++) {
-                    for (let x = 0; x < WIDTH; x++) {
-                        const idx = (y * WIDTH + x) * 3;
-                        
-                        const color = renderPixelWithCA(x, y);
-                        
-                        accumBuffer[idx] += color.x;
-                        accumBuffer[idx + 1] += color.y;
-                        accumBuffer[idx + 2] += color.z;
-                    }
-                }
-            }
-            
-            frameCount++;
-            
-            // Update display
-            for (let y = 0; y < HEIGHT; y++) {
-                for (let x = 0; x < WIDTH; x++) {
-                    const idx = (y * WIDTH + x) * 3;
-                    const pixelIdx = (y * WIDTH + x) * 4;
-                    
-                    const scale = 1.0 / frameCount;
-                    
-                    // Tone mapping and gamma correction
-                    let r = Math.sqrt(accumBuffer[idx] * scale);
-                    let g = Math.sqrt(accumBuffer[idx + 1] * scale);
-                    let b = Math.sqrt(accumBuffer[idx + 2] * scale);
-                    
-                    imageData.data[pixelIdx] = Math.min(255, r * 255);
-                    imageData.data[pixelIdx + 1] = Math.min(255, g * 255);
-                    imageData.data[pixelIdx + 2] = Math.min(255, b * 255);
-                    imageData.data[pixelIdx + 3] = 255;
-                }
-            }
-            
-            ctx.putImageData(imageData, 0, 0);
-            
-            // Update stats
-            const currentTime = performance.now();
-            fps = 1000 / (currentTime - lastTime);
-            lastTime = currentTime;
-            
-            document.getElementById('frameCount').textContent = frameCount;
-            document.getElementById('fps').textContent = fps.toFixed(1);
-            
-            requestAnimationFrame(render);
-        }
-        
-        // Reset accumulation
-        function resetAccumulation() {
-            frameCount = 0;
-            accumBuffer.fill(0);
-        }
-        
-        // UI Controls
-        document.getElementById('samples').addEventListener('input', (e) => {
-            settings.samplesPerFrame = parseInt(e.target.value);
-            document.getElementById('samplesValue').textContent = settings.samplesPerFrame;
-            resetAccumulation();
+
+        const vals = readValues();
+        vals.forEach((v, i) => {
+          if (classInsts[i] && v !== null) {
+            classInsts[i].props[propName] = { type: typeId, value: v };
+            if (propName === 'Name' && typeof v === 'string') classInsts[i].name = v;
+            propCount++;
+          }
         });
-        
-        document.getElementById('bounces').addEventListener('input', (e) => {
-            settings.maxBounces = parseInt(e.target.value);
-            document.getElementById('bouncesValue').textContent = settings.maxBounces;
-            resetAccumulation();
-        });
-        
-        document.getElementById('aperture').addEventListener('input', (e) => {
-            settings.aperture = parseFloat(e.target.value);
-            document.getElementById('apertureValue').textContent = settings.aperture.toFixed(2);
-            resetAccumulation();
-        });
-        
-        document.getElementById('focus').addEventListener('input', (e) => {
-            settings.focusDistance = parseFloat(e.target.value);
-            document.getElementById('focusValue').textContent = settings.focusDistance.toFixed(1);
-            resetAccumulation();
-        });
-        
-        document.getElementById('aberration').addEventListener('input', (e) => {
-            settings.chromaticAberration = parseFloat(e.target.value);
-            document.getElementById('aberrationValue').textContent = settings.chromaticAberration.toFixed(3);
-            resetAccumulation();
-        });
-        
-        document.getElementById('volume').addEventListener('input', (e) => {
-            settings.volumetricDensity = parseFloat(e.target.value);
-            document.getElementById('volumeValue').textContent = settings.volumetricDensity.toFixed(2);
-            resetAccumulation();
-        });
-        
-        document.getElementById('rotation').addEventListener('input', (e) => {
-            settings.cameraRotation = parseFloat(e.target.value);
-            document.getElementById('rotationValue').textContent = settings.cameraRotation.toFixed(1);
-            resetAccumulation();
-        });
-        
-        document.getElementById('reset').addEventListener('click', resetAccumulation);
-        
-        // Initialize
-        document.getElementById('resolution').textContent = `${WIDTH}x${HEIGHT}`;
-        render();
-    </script>
+
+      } catch(e) {}
+
+    } else if (chunk.type === 'PRNT') {
+      try {
+        cv.u8(); // version
+        const count = cv.u32();
+        const childBytes = chunk.raw.slice(cv.pos(), cv.pos() + count * 4);
+        const parentBytes = chunk.raw.slice(cv.pos() + count * 4, cv.pos() + count * 8);
+        const childIds  = decodeReferents(childBytes, count);
+        const parentIds = decodeReferents(parentBytes, count);
+
+        for (let i = 0; i < count; i++) {
+          const inst = instMap[childIds[i]];
+          if (inst) inst.parentId = parentIds[i];
+        }
+      } catch(e) {}
+    }
+  }
+
+  // Build list & scripts
+  for (const inst of instList) {
+    instances.push(inst);
+    if (inst.cls === 'LocalScript' || inst.cls === 'Script' || inst.cls === 'ModuleScript') {
+      const src = inst.props['Source']?.value || '';
+      scripts.push({ name: inst.name, cls: inst.cls, source: src });
+      inst.source = src;
+    }
+  }
+
+  return { instances, scripts, propCount };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HEURISTIC PARSER (fallback for corrupted/partial files)
+// ═══════════════════════════════════════════════════════════
+function heuristicParse(text, filename) {
+  const instances = [];
+  const scripts = [];
+  let propCount = 0;
+
+  // Find Lua source blocks
+  const srcReg = /Source(.*?)(?=PROP|PRNT|PEND|<\/roblox>)/gs;
+  const nameReg = /Name\s*([A-Za-z][A-Za-z0-9_]*)/g;
+  const clsReg  = /(?:LocalScript|Script|ModuleScript|Frame|ScreenGui|ImageButton|Part|Model)/g;
+
+  const names = [...text.matchAll(nameReg)].map(m => m[1]);
+  const classes = [...text.matchAll(clsReg)].map(m => m[0]);
+
+  classes.forEach((cls, i) => {
+    const inst = { cls, name: names[i] || cls, props: {}, children: [] };
+    instances.push(inst);
+    propCount += 3;
+
+    if (cls === 'LocalScript' || cls === 'Script' || cls === 'ModuleScript') {
+      // Try to grab source near this class mention
+      const idx = text.indexOf(cls);
+      const nearby = text.slice(idx, idx + 8000);
+      // Look for lua-like content
+      const luaMatch = nearby.match(/local\s+\w+|game:|function\s+\w+|:Connect\(|:GetService\(/s);
+      const srcStart = luaMatch ? nearby.indexOf(luaMatch[0]) : -1;
+      let source = '';
+      if (srcStart >= 0) {
+        source = nearby.slice(srcStart, srcStart + 3000).replace(/[\x00-\x08\x0b\x0e-\x1f\x7f-\x9f]/g, '');
+      }
+      scripts.push({ name: inst.name, cls, source });
+      inst.source = source;
+    }
+  });
+
+  return { instances, scripts, propCount };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LUA CODEGEN
+// ═══════════════════════════════════════════════════════════
+function generateLocalScript(parsed) {
+  const { instances, scripts } = parsed;
+  const lines = [];
+
+  const header = `-- ╔══════════════════════════════════════════════════════╗
+-- ║          Generated by rbxm2sl v1.0.0                 ║
+-- ║  Drop into StarterPlayerScripts or StarterCharacterScripts  ║
+-- ╚══════════════════════════════════════════════════════╝
+-- Auto-generated LocalScript — recreates all instances and logic
+-- from the original .rbxm file at runtime.
+
+`;
+
+  lines.push(header);
+
+  // Services
+  const usedServices = new Set();
+  for (const s of scripts) {
+    if (s.source.includes('UserInputService'))  usedServices.add('UserInputService');
+    if (s.source.includes('RunService'))        usedServices.add('RunService');
+    if (s.source.includes('TweenService'))      usedServices.add('TweenService');
+    if (s.source.includes('Players'))           usedServices.add('Players');
+    if (s.source.includes('ReplicatedStorage')) usedServices.add('ReplicatedStorage');
+    if (s.source.includes('SoundService'))      usedServices.add('SoundService');
+  }
+
+  // Always include Players for PlayerGui
+  usedServices.add('Players');
+
+  lines.push('-- ── Services ────────────────────────────────────────────');
+  for (const svc of usedServices) {
+    lines.push(`local ${svc} = game:GetService("${svc}")`);
+  }
+  lines.push('');
+  lines.push('local LocalPlayer = Players.LocalPlayer');
+  lines.push('local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")');
+  lines.push('');
+
+  // Separate instances into GUI and non-GUI
+  const guiClasses = new Set([
+    'ScreenGui','Frame','ImageButton','TextButton','ImageLabel','TextLabel',
+    'ScrollingFrame','ViewportFrame','BillboardGui','SurfaceGui',
+    'TextBox','UIListLayout','UIGridLayout','UIPadding','UICorner',
+    'UIStroke','UIAspectRatioConstraint','UISizeConstraint'
+  ]);
+
+  const guiInsts   = instances.filter(i => guiClasses.has(i.cls));
+  const otherInsts = instances.filter(i => !guiClasses.has(i.cls) && i.cls !== 'LocalScript' && i.cls !== 'Script' && i.cls !== 'ModuleScript');
+
+  // Emit GUI instances
+  if (guiInsts.length > 0) {
+    lines.push('-- ── GUI Instances ───────────────────────────────────────');
+    for (const inst of guiInsts) {
+      const varName = safeVarName(inst.name);
+      lines.push(`local ${varName} = Instance.new("${inst.cls}")`);
+      lines.push(`${varName}.Name = ${luaStr(inst.name)}`);
+
+      // Emit known properties
+      emitProps(lines, varName, inst);
+
+      // Parent assignment (basic heuristic)
+      if (inst.cls === 'ScreenGui') {
+        lines.push(`${varName}.Parent = PlayerGui`);
+      }
+      lines.push('');
+    }
+
+    // Second pass: parent children to their parents
+    lines.push('-- ── Parenting ───────────────────────────────────────────');
+    for (const inst of guiInsts) {
+      if (inst.cls === 'ScreenGui') continue;
+      const varName = safeVarName(inst.name);
+
+      // Find likely parent: first ScreenGui, or first Frame
+      let parentVar = null;
+      if (inst.cls === 'Frame' || inst.cls === 'ImageButton' || inst.cls === 'TextButton'
+        || inst.cls === 'TextLabel' || inst.cls === 'ImageLabel' || inst.cls === 'TextBox') {
+        const sg = guiInsts.find(i => i.cls === 'ScreenGui');
+        const fr = guiInsts.find(i => i.cls === 'Frame' && i !== inst);
+        parentVar = fr ? safeVarName(fr.name) : (sg ? safeVarName(sg.name) : null);
+      } else {
+        const sg = guiInsts.find(i => i.cls === 'ScreenGui');
+        parentVar = sg ? safeVarName(sg.name) : null;
+      }
+      if (parentVar) lines.push(`${varName}.Parent = ${parentVar}`);
+    }
+    lines.push('');
+  }
+
+  // Emit non-GUI (Parts, Models, etc.)
+  if (otherInsts.length > 0) {
+    lines.push('-- ── Non-GUI Instances ───────────────────────────────────');
+    for (const inst of otherInsts) {
+      const varName = safeVarName(inst.name);
+      lines.push(`local ${varName} = Instance.new("${inst.cls}")`);
+      lines.push(`${varName}.Name = ${luaStr(inst.name)}`);
+      emitProps(lines, varName, inst);
+      lines.push(`${varName}.Parent = workspace`);
+      lines.push('');
+    }
+  }
+
+  // Emit scripts inline
+  if (scripts.length > 0) {
+    lines.push('-- ── Script Logic ────────────────────────────────────────');
+    lines.push('-- (Original script source embedded below)');
+    lines.push('');
+
+    for (const scr of scripts) {
+      if (!scr.source || scr.source.trim() === '') continue;
+      lines.push(`-- ▼ ${scr.cls}: "${scr.name}" ▼`);
+      // Clean up the source
+      const cleanSrc = cleanLuaSource(scr.source);
+      lines.push(cleanSrc);
+      lines.push('');
+      lines.push(`-- ▲ end "${scr.name}" ▲`);
+      lines.push('');
+    }
+  }
+
+  // If no scripts were found, emit a note
+  if (scripts.length === 0) {
+    lines.push('-- ── Note ───────────────────────────────────────────────');
+    lines.push('-- No script source was found in this RBXM file.');
+    lines.push('-- All instances have been created above.');
+    lines.push('-- Add your own logic here:');
+    lines.push('');
+    lines.push('-- Example: connect to a button');
+    const btn = guiInsts.find(i => i.cls === 'ImageButton' || i.cls === 'TextButton');
+    if (btn) {
+      lines.push(`${safeVarName(btn.name)}.MouseButton1Click:Connect(function()`);
+      lines.push(`\tprint("${btn.name} clicked!")`);
+      lines.push(`end)`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
+// ── Property emitter ──
+function emitProps(lines, varName, inst) {
+  const p = inst.props;
+
+  const propHandlers = {
+    'BackgroundTransparency': v => `${varName}.BackgroundTransparency = ${numVal(v)}`,
+    'BackgroundColor3':       v => `${varName}.BackgroundColor3 = ${color3Val(v)}`,
+    'BorderSizePixel':        v => `${varName}.BorderSizePixel = ${numVal(v)}`,
+    'Visible':                v => `${varName}.Visible = ${boolVal(v)}`,
+    'ZIndex':                 v => `${varName}.ZIndex = ${numVal(v)}`,
+    'Size':                   v => `${varName}.Size = ${udim2Val(v)}`,
+    'Position':               v => `${varName}.Position = ${udim2Val(v)}`,
+    'AnchorPoint':            v => `${varName}.AnchorPoint = ${vec2Val(v)}`,
+    'Image':                  v => `${varName}.Image = ${strVal(v)}`,
+    'HoverImage':             v => `${varName}.HoverImage = ${strVal(v)}`,
+    'PressedImage':           v => `${varName}.PressedImage = ${strVal(v)}`,
+    'ImageTransparency':      v => `${varName}.ImageTransparency = ${numVal(v)}`,
+    'ImageColor3':            v => `${varName}.ImageColor3 = ${color3Val(v)}`,
+    'Text':                   v => `${varName}.Text = ${strVal(v)}`,
+    'TextColor3':             v => `${varName}.TextColor3 = ${color3Val(v)}`,
+    'TextSize':               v => `${varName}.TextSize = ${numVal(v)}`,
+    'TextTransparency':       v => `${varName}.TextTransparency = ${numVal(v)}`,
+    'Font':                   v => `${varName}.Font = ${enumVal('Font', v)}`,
+    'LayoutOrder':            v => `${varName}.LayoutOrder = ${numVal(v)}`,
+    'Rotation':               v => `${varName}.Rotation = ${numVal(v)}`,
+    'ClipsDescendants':       v => `${varName}.ClipsDescendants = ${boolVal(v)}`,
+    'Active':                 v => `${varName}.Active = ${boolVal(v)}`,
+    'Selectable':             v => `${varName}.Selectable = ${boolVal(v)}`,
+    'AutoButtonColor':        v => `${varName}.AutoButtonColor = ${boolVal(v)}`,
+    'Modal':                  v => `${varName}.Modal = ${boolVal(v)}`,
+    'ResetOnSpawn':           v => `${varName}.ResetOnSpawn = ${boolVal(v)}`,
+    'DisplayOrder':           v => `${varName}.DisplayOrder = ${numVal(v)}`,
+    'Enabled':                v => `${varName}.Enabled = ${boolVal(v)}`,
+    'ScaleType':              v => `${varName}.ScaleType = ${enumVal('ScaleType', v)}`,
+    'ResampleMode':           v => `${varName}.ResampleMode = ${enumVal('ResamplerMode', v)}`,
+    'AutomaticSize':          v => `${varName}.AutomaticSize = ${enumVal('AutomaticSize', v)}`,
+  };
+
+  for (const [key, handler] of Object.entries(propHandlers)) {
+    if (p[key] !== undefined) {
+      try { lines.push(handler(p[key])); } catch(e) {}
+    }
+  }
+}
+
+// ── Value helpers ──
+function numVal(p) {
+  if (p === null || p === undefined) return '0';
+  const v = typeof p === 'object' && p.value !== undefined ? p.value : p;
+  const n = parseFloat(v);
+  if (isNaN(n)) return '0';
+  return Number.isInteger(n) ? String(n) : n.toFixed(4).replace(/\.?0+$/, '');
+}
+
+function boolVal(p) {
+  if (p === null || p === undefined) return 'false';
+  const v = typeof p === 'object' && p.value !== undefined ? p.value : p;
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  if (typeof v === 'string')  return (v === 'true' || v === '1') ? 'true' : 'false';
+  return v ? 'true' : 'false';
+}
+
+function strVal(p) {
+  if (p === null || p === undefined) return '""';
+  const v = typeof p === 'object' && p.value !== undefined ? p.value : p;
+  return luaStr(String(v));
+}
+
+function luaStr(s) {
+  return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '') + '"';
+}
+
+function color3Val(p) {
+  if (!p) return 'Color3.new(1,1,1)';
+  const v = typeof p === 'object' && p.value !== undefined ? p.value : p;
+  if (typeof v === 'object' && v !== null && 'r' in v) {
+    return `Color3.new(${f(v.r)}, ${f(v.g)}, ${f(v.b)})`;
+  }
+  // Try XML color (r,g,b as children or text)
+  return 'Color3.new(1,1,1)';
+}
+
+function f(n) {
+  if (n === undefined || n === null) return '1';
+  const x = parseFloat(n);
+  if (isNaN(x)) return '1';
+  return x.toFixed(3).replace(/\.?0+$/, '');
+}
+
+function udim2Val(p) {
+  if (!p) return 'UDim2.new(0,0,0,0)';
+  const v = typeof p === 'object' && p.value !== undefined ? p.value : p;
+  if (typeof v === 'object' && v !== null) {
+    const xs = f(v.xs ?? v.XScale ?? 0);
+    const xo = Math.round(v.xo ?? v.XOffset ?? 0);
+    const ys = f(v.ys ?? v.YScale ?? 0);
+    const yo = Math.round(v.yo ?? v.YOffset ?? 0);
+    return `UDim2.new(${xs}, ${xo}, ${ys}, ${yo})`;
+  }
+  return 'UDim2.new(0,0,0,0)';
+}
+
+function vec2Val(p) {
+  if (!p) return 'Vector2.new(0,0)';
+  const v = typeof p === 'object' && p.value !== undefined ? p.value : p;
+  if (typeof v === 'object' && v !== null) {
+    return `Vector2.new(${f(v.X ?? v.x ?? 0)}, ${f(v.Y ?? v.y ?? 0)})`;
+  }
+  return 'Vector2.new(0,0)';
+}
+
+function enumVal(enumType, p) {
+  if (!p) return `Enum.${enumType}.Default`;
+  const v = typeof p === 'object' && p.value !== undefined ? p.value : p;
+  // If numeric, just return generic
+  if (typeof v === 'number') return `Enum.${enumType}[${v}] or Enum.${enumType}.Default`;
+  return `Enum.${enumType}.${v}`;
+}
+
+// Known rbxassetid property value
+function safeVarName(name) {
+  if (!name) return 'inst';
+  return name.replace(/[^a-zA-Z0-9_]/g, '_').replace(/^(\d)/, '_$1') || 'inst';
+}
+
+function cleanLuaSource(src) {
+  // Remove null bytes and control chars, keep newlines/tabs
+  return src
+    .replace(/\x00/g, '')
+    .replace(/[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '')
+    .trim();
+}
+
+function formatBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n/1024).toFixed(1) + ' KB';
+  return (n/1048576).toFixed(2) + ' MB';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  COPY / DOWNLOAD
+// ═══════════════════════════════════════════════════════════
+async function copyScript() {
+  if (!generatedScript) return;
+  await navigator.clipboard.writeText(generatedScript);
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = 'COPIED!';
+  btn.style.color = 'var(--green)';
+  btn.style.borderColor = 'var(--green)';
+  setTimeout(() => { btn.textContent = orig; btn.style.color=''; btn.style.borderColor=''; }, 1500);
+}
+
+function downloadScript() {
+  if (!generatedScript) return;
+  const blob = new Blob([generatedScript], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'rbxm2sl_output.lua';
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+runBoot();
+</script>
 </body>
 </html>
